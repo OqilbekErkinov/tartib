@@ -3,31 +3,26 @@ const Books = (() => {
   let activeTab = 'unread';
 
   function render() {
-    const books = DB.getBooks();
-    const tabs  = { unread: 'Yangi', reading: "O'qilmoqda", read: "O'qilgan", lent: 'Berilgan' };
+    const books    = DB.getBooks();
+    const tabs     = { unread: 'Yangi', reading: "O'qilmoqda", read: "O'qilgan", lent: 'Berilgan' };
     const filtered = books.filter(b => b.status === activeTab);
-    const msgs = {
-      unread:  "Yangi kitob qo'shing",
-      reading: "Hozir kitob o'qilmayapti",
-      read:    "Hali kitob o'qib bo'linmagan",
-      lent:    "Hech kimga kitob berilmagan",
+    const msgs     = {
+      unread:  "Yangi kitob qo'shing", reading: "Hozir kitob o'qilmayapti",
+      read:    "Hali kitob o'qib bo'linmagan", lent: "Hech kimga kitob berilmagan",
     };
-
-    const booksHtml = filtered.length === 0
-      ? `<div class="empty-state"><span class="empty-icon">📚</span><p>${msgs[activeTab]}</p></div>`
-      : filtered.map(b => bookCard(b)).join('');
-
     const counts = {
       unread:  books.filter(b => b.status === 'unread').length,
       reading: books.filter(b => b.status === 'reading').length,
       read:    books.filter(b => b.status === 'read').length,
       lent:    books.filter(b => b.status === 'lent').length,
     };
-
     const total = books.length;
 
+    const booksHtml = filtered.length === 0
+      ? `<div class="empty-state"><span class="empty-icon">📚</span><p>${msgs[activeTab]}</p></div>`
+      : filtered.map(b => bookCard(b)).join('');
+
     return `<div class="page-enter">
-      <!-- Jami summary card -->
       <div style="background:var(--dark);border-radius:var(--radius);padding:16px 18px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-dark)">
         <div>
           <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px">Jami kutubxona</div>
@@ -47,10 +42,10 @@ const Books = (() => {
 
       <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
         ${[
-          { k:'unread',  label:'Yangi',         color:'var(--dark)' },
-          { k:'reading', label:"O'qilmoqda",    color:'var(--orange)' },
-          { k:'read',    label:"O'qilgan",       color:'var(--green)' },
-          { k:'lent',    label:'Berilgan',       color:'#D94040' },
+          { k:'unread',  label:'Yangi',      color:'var(--dark)' },
+          { k:'reading', label:"O'qilmoqda", color:'var(--orange)' },
+          { k:'read',    label:"O'qilgan",   color:'var(--green)' },
+          { k:'lent',    label:'Berilgan',   color:'#D94040' },
         ].map(s => `
           <div class="stat-card" style="padding:11px 10px;text-align:center;cursor:pointer;${activeTab===s.k?'border-top:3px solid '+s.color:''}" onclick="Books.setTab('${s.k}')">
             <div style="font-size:20px;font-weight:900;color:${s.color}">${counts[s.k]}</div>
@@ -59,9 +54,9 @@ const Books = (() => {
       </div>
 
       <div class="tabs">
-        ${Object.entries(tabs).map(([k, v]) => `
-          <button class="tab-btn ${activeTab === k ? 'active' : ''}" onclick="Books.setTab('${k}')">${v}</button>
-        `).join('')}
+        ${Object.entries(tabs).map(([k, v]) =>
+          `<button class="tab-btn ${activeTab===k?'active':''}" onclick="Books.setTab('${k}')">${v}</button>`
+        ).join('')}
       </div>
 
       ${booksHtml}
@@ -69,24 +64,23 @@ const Books = (() => {
   }
 
   function bookCard(b) {
-    let actions = '';
+    let statusActions = '';
     if (b.status === 'unread') {
-      actions = `<button class="btn btn-sm" style="background:var(--orange-light);color:var(--orange-dark);font-weight:700;border:none;cursor:pointer;border-radius:6px;padding:7px 12px;font-size:12px" onclick="Books.move('${b.id}','reading')">▶ Boshlash</button>`;
+      statusActions = `<button class="btn btn-sm" style="background:var(--orange-light);color:var(--orange-dark);font-weight:700;border:none;cursor:pointer;border-radius:6px;padding:7px 12px;font-size:12px" onclick="Books.move('${b.id}','reading')">▶ Boshlash</button>`;
     } else if (b.status === 'reading') {
-      actions = `
+      statusActions = `
         <button class="btn btn-sm btn-success" onclick="Books.move('${b.id}','read')">✓ Tugatdim</button>
-        <button class="btn btn-sm btn-ghost" onclick="Books.openLend('${b.id}')">📤 Ber</button>`;
+        <button class="btn btn-sm btn-ghost"   onclick="Books.openLend('${b.id}')">📤 Ber</button>`;
     } else if (b.status === 'read') {
-      actions = `<button class="btn btn-sm btn-ghost" onclick="Books.openLend('${b.id}')">📤 Berish</button>`;
+      statusActions = `<button class="btn btn-sm btn-ghost" onclick="Books.openLend('${b.id}')">📤 Berish</button>`;
     } else if (b.status === 'lent') {
-      actions = `<button class="btn btn-sm btn-success" onclick="Books.move('${b.id}','read')">↩ Qaytdi</button>`;
+      statusActions = `<button class="btn btn-sm btn-success" onclick="Books.move('${b.id}','read')">↩ Qaytdi</button>`;
     }
 
     const lentInfo = b.status === 'lent' && b.lentTo
       ? `<div style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--orange-dark);font-weight:700;background:var(--orange-light);padding:3px 9px;border-radius:20px;margin-top:6px">
            📤 ${b.lentTo} · ${fmtDate(b.lentDate)}
-         </div>`
-      : '';
+         </div>` : '';
 
     const metaParts = [
       b.readYear ? `📖 ${b.readYear}` : '',
@@ -101,74 +95,102 @@ const Books = (() => {
           ${b.author ? `<div class="book-author">${b.author}</div>` : ''}
           ${metaParts.length ? `<div class="book-meta">${metaParts.map(p=>`<span>${p}</span>`).join('')}</div>` : ''}
           ${lentInfo}
-          <div class="book-actions">${actions}</div>
+          <div class="book-actions">${statusActions}</div>
         </div>
-        <button onclick="Books.del('${b.id}')" style="border:none;background:none;color:var(--text3);cursor:pointer;font-size:20px;padding:2px;align-self:flex-start;line-height:1">×</button>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">
+          <button class="action-edit" onclick="Books.openEdit('${b.id}')">✎</button>
+          <button class="action-del"  onclick="Books.del('${b.id}')">×</button>
+        </div>
       </div>
     </div>`;
   }
 
-  function setTab(tab) { activeTab = tab; App.renderPage('books'); }
-
-  function openAdd() {
-    openModal("Kitob qo'shish", `
+  // ── BOOK FORM (shared for add & edit) ────────────────────────
+  function bookForm(data = {}) {
+    return `
       <div class="form-group">
         <label class="form-label">Kitob nomi *</label>
-        <input class="form-input" id="bk_title" type="text" placeholder="Kitob nomi...">
+        <input class="form-input" id="bk_title" type="text" placeholder="Kitob nomi..." value="${data.title || ''}">
       </div>
       <div class="form-group">
         <label class="form-label">Muallif</label>
-        <input class="form-input" id="bk_author" type="text" placeholder="Muallif ismi...">
+        <input class="form-input" id="bk_author" type="text" placeholder="Muallif ismi..." value="${data.author || ''}">
       </div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Sotib olingan sana</label>
-          <input class="form-input" id="bk_buyDate" type="date">
+          <input class="form-input" id="bk_buyDate" type="date" value="${data.buyDate || ''}">
         </div>
         <div class="form-group">
           <label class="form-label">O'qilgan yil</label>
-          <input class="form-input" id="bk_readYear" type="number" placeholder="2024" min="1900" max="2100">
+          <input class="form-input" id="bk_readYear" type="number" placeholder="2024" min="1900" max="2100" value="${data.readYear || ''}">
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">Holati</label>
         <select class="form-select" id="bk_status">
-          <option value="unread">Yangi (o'qilmagan)</option>
-          <option value="reading">O'qilmoqda</option>
-          <option value="read">O'qilgan</option>
+          <option value="unread"  ${(data.status||'unread')==='unread'  ?'selected':''}>Yangi (o'qilmagan)</option>
+          <option value="reading" ${data.status==='reading'?'selected':''}>O'qilmoqda</option>
+          <option value="read"    ${data.status==='read'   ?'selected':''}>O'qilgan</option>
+          <option value="lent"    ${data.status==='lent'   ?'selected':''}>Berilgan</option>
         </select>
       </div>
       <div class="form-group">
         <label class="form-label">Kitob rangi</label>
-        <div class="color-picker" id="bk_colorPicker">
-          ${COLORS.map((c, i) => `
-            <div class="color-dot ${i===0?'selected':''}" style="background:${c}" data-color="${c}" onclick="Books.selectColor(this)"></div>
+        <div class="color-picker">
+          ${COLORS.map(c => `
+            <div class="color-dot ${(data.color||COLORS[0])===c?'selected':''}"
+              style="background:${c};border-color:${(data.color||COLORS[0])===c?'var(--dark)':'var(--border)'}"
+              data-color="${c}" onclick="Books.selectColor(this)"></div>
           `).join('')}
         </div>
-      </div>
-      <button class="btn btn-primary btn-full" style="margin-top:6px" onclick="Books.save()">Saqlash</button>
-    `);
+      </div>`;
+  }
+
+  function setTab(tab) { activeTab = tab; App.renderPage('books'); }
+
+  function openAdd() {
+    openModal("Kitob qo'shish",
+      bookForm() +
+      `<button class="btn btn-primary btn-full" style="margin-top:6px" onclick="Books.save('')">Saqlash</button>`
+    );
+    setTimeout(() => document.getElementById('bk_title')?.focus(), 320);
+  }
+
+  function openEdit(id) {
+    const b = DB.getBooks().find(x => x.id === id);
+    if (!b) return;
+    openModal("Kitobni tahrirlash",
+      bookForm(b) +
+      `<button class="btn btn-primary btn-full" style="margin-top:6px" onclick="Books.save('${id}')">Saqlash</button>`
+    );
     setTimeout(() => document.getElementById('bk_title')?.focus(), 320);
   }
 
   function selectColor(el) {
-    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
-    el.classList.add('selected');
+    document.querySelectorAll('.color-dot').forEach(d => { d.classList.remove('selected'); d.style.borderColor = 'var(--border)'; });
+    el.classList.add('selected'); el.style.borderColor = 'var(--dark)';
   }
 
-  function save() {
+  function save(id) {
     const title = document.getElementById('bk_title').value.trim();
     if (!title) { alert('Kitob nomini kiriting'); return; }
     const colorEl = document.querySelector('.color-dot.selected');
-    const books = DB.getBooks();
-    books.push({
-      id: uid(), title,
+    const color   = colorEl ? colorEl.dataset.color : COLORS[0];
+    const fields  = {
+      title, color,
       author:   document.getElementById('bk_author').value.trim(),
       buyDate:  document.getElementById('bk_buyDate').value,
       readYear: document.getElementById('bk_readYear').value,
       status:   document.getElementById('bk_status').value,
-      color:    colorEl ? colorEl.dataset.color : COLORS[0],
-    });
+    };
+    const books = DB.getBooks();
+    if (id) {
+      const b = books.find(x => x.id === id);
+      if (b) Object.assign(b, fields);
+    } else {
+      books.push({ id: uid(), ...fields });
+    }
     DB.saveBooks(books);
     closeModal();
     App.renderPage('books');
@@ -200,10 +222,9 @@ const Books = (() => {
   function lend(id) {
     const to = document.getElementById('lend_to').value.trim();
     if (!to) { alert('Ismni kiriting'); return; }
-    const date  = document.getElementById('lend_date').value || todayStr();
     const books = DB.getBooks();
     const b = books.find(x => x.id === id);
-    if (b) { b.status = 'lent'; b.lentTo = to; b.lentDate = date; }
+    if (b) { b.status = 'lent'; b.lentTo = to; b.lentDate = document.getElementById('lend_date').value || todayStr(); }
     DB.saveBooks(books);
     closeModal();
     App.renderPage('books');
@@ -215,5 +236,5 @@ const Books = (() => {
     App.renderPage('books');
   }
 
-  return { render, setTab, openAdd, selectColor, save, move, openLend, lend, del };
+  return { render, setTab, openAdd, openEdit, selectColor, save, move, openLend, lend, del };
 })();

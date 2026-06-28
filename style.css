@@ -680,6 +680,32 @@ body {
 }
 .color-dot.selected, .color-dot:hover { border-color: var(--dark); transform: scale(1.12); }
 
+/* ===== ITEM ACTION BUTTONS ===== */
+.action-btns { display: flex; gap: 5px; margin-top: 5px; justify-content: flex-end; }
+.action-edit {
+  border: none;
+  background: var(--orange-light);
+  color: var(--orange-dark);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.action-del {
+  border: none;
+  background: #FEF0ED;
+  color: #D94040;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* ===== TRANSACTION AMOUNTS ===== */
 .tx-amount        { font-size: 16px; font-weight: 800; letter-spacing: -.2px; }
 .tx-amount.income  { color: var(--green); }
