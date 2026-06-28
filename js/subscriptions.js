@@ -129,8 +129,8 @@ const Subscriptions = (() => {
   function save(id) {
     const name   = document.getElementById('sb_name').value.trim();
     const amount = parseAmount(document.getElementById('sb_amount').value);
-    if (!name)             { alert('Nomini kiriting'); return; }
-    if (!amount || amount <= 0) { alert('Miqdorni kiriting'); return; }
+    if (!name)             { App.Toast('Nomini kiriting'); return; }
+    if (!amount || amount <= 0) { App.Toast('Miqdorni kiriting'); return; }
     const fields = {
       name, amount,
       period:   document.getElementById('sb_period').value,
@@ -158,9 +158,10 @@ const Subscriptions = (() => {
   }
 
   function del(id) {
-    if (!confirm("O'chirishni tasdiqlaysizmi?")) return;
-    DB.saveSubs(DB.getSubs().filter(s => s.id !== id));
-    App.renderPage('subscriptions');
+    App.Confirm("O'chirishni tasdiqlaysizmi?", () => {
+      DB.saveSubs(DB.getSubs().filter(s => s.id !== id));
+      App.renderPage('subscriptions');
+    });
   }
 
   return { render, openAdd, openEdit, save, togglePause, del };

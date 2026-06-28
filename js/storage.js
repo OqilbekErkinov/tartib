@@ -1,33 +1,86 @@
+let cloudData = null;
+
 const DB = {
-  get(key, def = null) {
-    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; }
+  // Load from Supabase on login
+  async initCloud() {
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return;
+      
+      const { data, error } = await sb.from('user_data').select('data').eq('user_id', user.id).single();
+      
+      if (error && error.code === 'PGRST116') {
+        // Yozuv topilmadi, yangi yaratamiz
+        cloudData = { transactions: [], books: [], habits: [], habitLogs: {}, goals: [], subs: [], notes: [], debts: [] };
+        // Localda bo'lsa, uni o'tkazib qo'yamiz (migratsiya)
+        cloudData.transactions = this.get('transactions', []);
+        cloudData.books = this.get('books', []);
+        cloudData.habits = this.get('habits', []);
+        cloudData.habitLogs = this.get('habitLogs', {});
+        cloudData.goals = this.get('goals', []);
+        cloudData.subs = this.get('subs', []);
+        cloudData.notes = this.get('notes', []);
+        cloudData.debts = this.get('debts', []);
+        
+        await sb.from('user_data').insert([{ user_id: user.id, data: cloudData }]);
+      } else if (data) {
+        cloudData = data.data || {};
+      }
+    } catch(e) {
+      console.error("Cloud DB error:", e);
+      if (!cloudData) cloudData = null; // fallback
+    }
   },
+
+  async syncCloud() {
+    if (!cloudData) return;
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (user) {
+        await sb.from('user_data')
+          .update({ data: cloudData, updated_at: new Date().toISOString() })
+          .eq('user_id', user.id);
+      }
+    } catch(e) { console.error("Cloud sync error:", e); }
+  },
+
+  get(key, def) {
+    if (cloudData && cloudData[key] !== undefined) return cloudData[key];
+    try { const v = localStorage.getItem('cp_'+key); return v ? JSON.parse(v) : def; } catch { return def; }
+  },
+
   set(key, val) {
-    try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+    if (cloudData) {
+      cloudData[key] = val;
+      this.syncCloud(); // async save
+    }
+    // Lokalga ham saqlab qo'yamiz zaxira uchun
+    try { localStorage.setItem('cp_'+key, JSON.stringify(val)); } catch {}
   },
-  // Finance
-  getTransactions() { return this.get('cp_transactions', []); },
-  saveTransactions(t) { this.set('cp_transactions', t); },
-  // Books
-  getBooks() { return this.get('cp_books', []); },
-  saveBooks(b) { this.set('cp_books', b); },
-  // Habits
-  getHabits() { return this.get('cp_habits', []); },
-  saveHabits(h) { this.set('cp_habits', h); },
-  getHabitLogs() { return this.get('cp_habit_logs', {}); },
-  saveHabitLogs(l) { this.set('cp_habit_logs', l); },
-  // Goals
-  getGoals() { return this.get('cp_goals', []); },
-  saveGoals(g) { this.set('cp_goals', g); },
-  // Subscriptions
-  getSubs() { return this.get('cp_subs', []); },
-  saveSubs(s) { this.set('cp_subs', s); },
-  // Notes
-  getNotes() { return this.get('cp_notes', []); },
-  saveNotes(n) { this.set('cp_notes', n); },
-  // Debts
-  getDebts() { return this.get('cp_debts', []); },
-  saveDebts(d) { this.set('cp_debts', d); },
+
+  // --- GETTERS & SETTERS ---
+  getTransactions() { return this.get('transactions', []); },
+  saveTransactions(t) { this.set('transactions', t); },
+  
+  getBooks() { return this.get('books', []); },
+  saveBooks(b) { this.set('books', b); },
+  
+  getHabits() { return this.get('habits', []); },
+  saveHabits(h) { this.set('habits', h); },
+  getHabitLogs() { return this.get('habitLogs', {}); },
+  saveHabitLogs(l) { this.set('habitLogs', l); },
+  
+  getGoals() { return this.get('goals', []); },
+  saveGoals(g) { this.set('goals', g); },
+  
+  getSubs() { return this.get('subs', []); },
+  saveSubs(s) { this.set('subs', s); },
+  
+  getNotes() { return this.get('notes', []); },
+  saveNotes(n) { this.set('notes', n); },
+  
+  getDebts() { return this.get('debts', []); },
+  saveDebts(d) { this.set('debts', d); },
 };
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }

@@ -245,7 +245,7 @@ const Finance = (() => {
 
   function saveTx(type) {
     const amount = parseAmount(document.getElementById('fi_amount').value);
-    if (!amount || amount <= 0) { alert('Miqdorni kiriting'); return; }
+    if (!amount || amount <= 0) { App.Toast('Miqdorni kiriting'); return; }
     const txs = DB.getTransactions();
     txs.push({ id: uid(), type, amount,
       cat:  document.getElementById('fi_cat').value,
@@ -259,7 +259,7 @@ const Finance = (() => {
 
   function updateTx(id) {
     const amount = parseAmount(document.getElementById('fi_amount').value);
-    if (!amount || amount <= 0) { alert('Miqdorni kiriting'); return; }
+    if (!amount || amount <= 0) { App.Toast('Miqdorni kiriting'); return; }
     const txs = DB.getTransactions();
     const t   = txs.find(x => x.id === id);
     if (t) {
@@ -274,9 +274,10 @@ const Finance = (() => {
   }
 
   function delTx(id) {
-    if (!confirm("O'chirishni tasdiqlaysizmi?")) return;
-    DB.saveTransactions(DB.getTransactions().filter(t => t.id !== id));
-    App.renderPage('finance');
+    App.Confirm("O'chirishni tasdiqlaysizmi?", () => {
+      DB.saveTransactions(DB.getTransactions().filter(t => t.id !== id));
+      App.renderPage('finance');
+    });
   }
 
   // ── DEBT FORM (shared for add & edit) ────────────────────────
@@ -334,8 +335,8 @@ const Finance = (() => {
   function saveDebt(type) {
     const person = document.getElementById('dbt_person').value.trim();
     const amount = parseAmount(document.getElementById('dbt_amount').value);
-    if (!person) { alert('Ismni kiriting'); return; }
-    if (!amount || amount <= 0) { alert('Miqdorni kiriting'); return; }
+    if (!person) { App.Toast('Ismni kiriting'); return; }
+    if (!amount || amount <= 0) { App.Toast('Miqdorni kiriting'); return; }
     const debts = DB.getDebts();
     debts.push({ id: uid(), type, person, amount,
       date:    document.getElementById('dbt_date').value || todayStr(),
@@ -351,8 +352,8 @@ const Finance = (() => {
   function updateDebt(id) {
     const person = document.getElementById('dbt_person').value.trim();
     const amount = parseAmount(document.getElementById('dbt_amount').value);
-    if (!person) { alert('Ismni kiriting'); return; }
-    if (!amount || amount <= 0) { alert('Miqdorni kiriting'); return; }
+    if (!person) { App.Toast('Ismni kiriting'); return; }
+    if (!amount || amount <= 0) { App.Toast('Miqdorni kiriting'); return; }
     const debts = DB.getDebts();
     const d = debts.find(x => x.id === id);
     if (d) {
@@ -377,10 +378,11 @@ const Finance = (() => {
   }
 
   function delDebt(id) {
-    if (!confirm("O'chirishni tasdiqlaysizmi?")) return;
-    DB.saveDebts(DB.getDebts().filter(d => d.id !== id));
-    const el = document.getElementById('debtsSection');
-    if (el) el.innerHTML = renderDebts();
+    App.Confirm("O'chirishni tasdiqlaysizmi?", () => {
+      DB.saveDebts(DB.getDebts().filter(d => d.id !== id));
+      const el = document.getElementById('debtsSection');
+      if (el) el.innerHTML = renderDebts();
+    });
   }
 
   return {

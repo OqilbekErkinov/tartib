@@ -133,7 +133,7 @@ const Habits = (() => {
 
   function save(id) {
     const name = document.getElementById('hb_name').value.trim();
-    if (!name) { alert('Odat nomini kiriting'); return; }
+    if (!name) { App.Toast('Odat nomini kiriting'); return; }
     const iconEl = document.querySelector('.icon-habit-btn.selected');
     const icon   = iconEl ? iconEl.dataset.icon : '🎯';
     const habits = DB.getHabits();
@@ -149,9 +149,10 @@ const Habits = (() => {
   }
 
   function del(id) {
-    if (!confirm("O'chirishni tasdiqlaysizmi?")) return;
-    DB.saveHabits(DB.getHabits().filter(h => h.id !== id));
-    App.renderPage('habits');
+    App.Confirm("O'chirishni tasdiqlaysizmi?", () => {
+      DB.saveHabits(DB.getHabits().filter(h => h.id !== id));
+      App.renderPage('habits');
+    });
   }
 
   return { render, toggle, openAdd, openEdit, selectIcon, save, del };

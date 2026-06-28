@@ -135,7 +135,7 @@ const Goals = (() => {
 
   function save(id) {
     const title = document.getElementById('gl_title').value.trim();
-    if (!title) { alert('Maqsadni kiriting'); return; }
+    if (!title) { App.Toast('Maqsadni kiriting'); return; }
     const type   = document.getElementById('gl_type').value;
     const fields = {
       title,
@@ -174,9 +174,10 @@ const Goals = (() => {
   }
 
   function del(id) {
-    if (!confirm("O'chirishni tasdiqlaysizmi?")) return;
-    DB.saveGoals(DB.getGoals().filter(g => g.id !== id));
-    App.renderPage('goals');
+    App.Confirm("O'chirishni tasdiqlaysizmi?", () => {
+      DB.saveGoals(DB.getGoals().filter(g => g.id !== id));
+      App.renderPage('goals');
+    });
   }
 
   return { render, openAdd, openEdit, toggleNumeric, save, updateAmount, complete, del };

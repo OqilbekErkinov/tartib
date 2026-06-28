@@ -61,7 +61,7 @@ const Notes = (() => {
   function save(id) {
     const title = document.getElementById('nt_title').value.trim();
     const body  = document.getElementById('nt_body').value.trim();
-    if (!title && !body) { alert('Sarlavha yoki matn kiriting'); return; }
+    if (!title && !body) { App.Toast('Sarlavha yoki matn kiriting'); return; }
     const colorEl = document.querySelector('.color-dot.selected');
     const color   = colorEl ? colorEl.dataset.color : '#FFFFFF';
     const notes   = DB.getNotes();
@@ -77,10 +77,11 @@ const Notes = (() => {
   }
 
   function del(id) {
-    if (!confirm("O'chirishni tasdiqlaysizmi?")) return;
-    DB.saveNotes(DB.getNotes().filter(n => n.id !== id));
-    closeModal();
-    App.renderPage('notes');
+    App.Confirm("O'chirishni tasdiqlaysizmi?", () => {
+      DB.saveNotes(DB.getNotes().filter(n => n.id !== id));
+      closeModal();
+      App.renderPage('notes');
+    });
   }
 
   return { render, openAdd, openEdit, pickColor, save, del };

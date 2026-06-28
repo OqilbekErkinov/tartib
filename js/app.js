@@ -12,8 +12,35 @@ function closeModal() {
 
 // ===== APP =====
 const App = (() => {
+  // --- UI Helpers ---
+  function Toast(msg, type = 'error') {
+    const t = document.createElement('div');
+    t.className = 'ui-toast ' + type;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.classList.add('show'), 10);
+    setTimeout(() => {
+      t.classList.remove('show');
+      setTimeout(() => t.remove(), 300);
+    }, 2500);
+  }
+
+  function Confirm(msg, onConfirm) {
+    openModal('Tasdiqlash', `
+      <p style="text-align:center;font-size:15px;margin-bottom:20px">${msg}</p>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost btn-full" onclick="closeModal()">Bekor qilish</button>
+        <button class="btn btn-danger btn-full" id="confirmOkBtn">O'chirish</button>
+      </div>
+    `);
+    document.getElementById('confirmOkBtn').onclick = () => {
+      closeModal();
+      onConfirm();
+    };
+  }
+
   const PAGE_CONFIG = {
-    dashboard:     { title: 'Tartib',           addFn: null },
+    dashboard:     { title: 'Tartibla',           addFn: null },
     finance:       { title: 'Moliya',           addFn: () => Finance.openAdd('expense') },
     books:         { title: 'Kitoblar',         addFn: () => Books.openAdd() },
     habits:        { title: 'Odatlar',          addFn: () => Habits.openAdd() },
@@ -196,6 +223,11 @@ const App = (() => {
           <div class="more-card-title">Eslatmalar</div>
           <div class="more-card-sub">${DB.getNotes().length} ta</div>
         </button>
+        <button class="more-card" onclick="Auth.logout()" style="border: 1px solid rgba(255,144,144,0.3); background: rgba(255,144,144,0.05);">
+          <div class="more-card-icon">🚪</div>
+          <div class="more-card-title" style="color: #FF9090;">Chiqish</div>
+          <div class="more-card-sub" style="color: rgba(255,144,144,0.7);">Profildan chiqish</div>
+        </button>
       </div>
     </div>`;
   }
@@ -219,7 +251,5 @@ const App = (() => {
     navigate('dashboard');
   }
 
-  return { init, go, renderPage };
+  return { init, go, renderPage, Toast, Confirm };
 })();
-
-document.addEventListener('DOMContentLoaded', () => App.init());

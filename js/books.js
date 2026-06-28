@@ -174,7 +174,7 @@ const Books = (() => {
 
   function save(id) {
     const title = document.getElementById('bk_title').value.trim();
-    if (!title) { alert('Kitob nomini kiriting'); return; }
+    if (!title) { App.Toast('Kitob nomini kiriting'); return; }
     const colorEl = document.querySelector('.color-dot.selected');
     const color   = colorEl ? colorEl.dataset.color : COLORS[0];
     const fields  = {
@@ -221,7 +221,7 @@ const Books = (() => {
 
   function lend(id) {
     const to = document.getElementById('lend_to').value.trim();
-    if (!to) { alert('Ismni kiriting'); return; }
+    if (!to) { App.Toast('Ismni kiriting'); return; }
     const books = DB.getBooks();
     const b = books.find(x => x.id === id);
     if (b) { b.status = 'lent'; b.lentTo = to; b.lentDate = document.getElementById('lend_date').value || todayStr(); }
@@ -231,9 +231,10 @@ const Books = (() => {
   }
 
   function del(id) {
-    if (!confirm("O'chirishni tasdiqlaysizmi?")) return;
-    DB.saveBooks(DB.getBooks().filter(b => b.id !== id));
-    App.renderPage('books');
+    App.Confirm("O'chirishni tasdiqlaysizmi?", () => {
+      DB.saveBooks(DB.getBooks().filter(b => b.id !== id));
+      App.renderPage('books');
+    });
   }
 
   return { render, setTab, openAdd, openEdit, selectColor, save, move, openLend, lend, del };
