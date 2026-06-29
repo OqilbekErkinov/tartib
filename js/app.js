@@ -353,12 +353,16 @@ const App = (() => {
     });
     updateDate();
     setInterval(updateDate, 1000);
+
+    // Service Worker ro'yxatdan o'tkazish (Android notification uchun zarur)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+
     Habits.checkNotifications();
     Finance.checkRecurring();
     checkStartupAlerts();
-    // Har 30 soniyada tekshir — drift va o'tkazib yuborishni kamaytirish uchun
     setInterval(Habits.checkNotifications, 30000);
-    // Telefon blokdan chiqqanda yoki tabga qaytganda darhol tekshir
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') Habits.checkNotifications();
     });

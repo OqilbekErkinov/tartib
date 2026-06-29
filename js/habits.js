@@ -119,7 +119,7 @@ const Habits = (() => {
     return res === 'granted';
   }
 
-  function checkNotifications() {
+  async function checkNotifications() {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     const habits   = DB.getHabits();
     const now      = new Date();
@@ -131,34 +131,42 @@ const Habits = (() => {
     const notified = JSON.parse(localStorage.getItem(nKey) || '[]');
     let changed    = false;
 
-    habits.forEach(h => {
-      if (!h.schedule?.notify)             return;
-      if (!isScheduledForDay(h, todayDay)) return;
-      if (todayLog[h.id])                  return;
-      if (notified.includes(h.id))         return;
+    // Service Worker orqali notification (Android Chrome uchun zarur)
+    let swReg = null;
+    if ('serviceWorker' in navigator) {
+      try { swReg = await navigator.serviceWorker.ready; } catch(e) {}
+    }
+
+    for (const h of habits) {
+      if (!h.schedule?.notify)             continue;
+      if (!isScheduledForDay(h, todayDay)) continue;
+      if (todayLog[h.id])                  continue;
+      if (notified.includes(h.id))         continue;
 
       const nt = h.schedule.notifyTime || h.schedule.time;
-      if (!nt) return;
+      if (!nt) continue;
 
       const [hh, mm] = nt.split(':').map(Number);
-      const ntMins   = hh * 60 + mm;
-      // 0–3 daqiqalik oyna: drift va telefon bloki uchun
-      const diff = nowMins - ntMins;
-      if (diff < 0 || diff > 3) return;
+      const diff = nowMins - (hh * 60 + mm);
+      if (diff < 0 || diff > 3) continue;
+
+      const opts = {
+        body: `${h.icon} ${h.name} — vaqti keldi!`,
+        tag:  `habit-${h.id}-${todayKey}`,
+      };
 
       try {
-        new Notification('Tartibla 🔔', {
-          body: `${h.icon} ${h.name} — vaqti keldi!`,
-          // SVG icon Android da ishlamaydi — icon bermayamiz
-          tag:  `habit-${h.id}-${todayKey}`,
-          requireInteraction: false,
-        });
+        if (swReg) {
+          await swReg.showNotification('Tartibla 🔔', opts);
+        } else {
+          new Notification('Tartibla 🔔', opts);
+        }
         notified.push(h.id);
         changed = true;
       } catch(e) {
         console.warn('Notification error:', e);
       }
-    });
+    }
 
     if (changed) localStorage.setItem(nKey, JSON.stringify(notified));
   }
