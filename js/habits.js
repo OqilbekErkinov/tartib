@@ -111,6 +111,45 @@ const Habits = (() => {
   }
 
   // ── FEATURE 1: NOTIFICATIONS ──────────────────────────────────
+  async function testNotification() {
+    // 1. API bor-yo'qligi
+    if (!('Notification' in window)) {
+      App.Toast('❌ Brauzer Notification API ni qo\'llab-quvvatlamaydi', 'error'); return;
+    }
+    // 2. Ruxsat holati
+    const perm = Notification.permission;
+    if (perm === 'denied') {
+      App.Toast('❌ Notification taqiqlangan — brauzer sozlamalaridan yoqing', 'error'); return;
+    }
+    if (perm !== 'granted') {
+      App.Toast('❌ Ruxsat yo\'q (' + perm + ')', 'error'); return;
+    }
+    // 3. Service Worker yo'li
+    if ('serviceWorker' in navigator) {
+      try {
+        const reg = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise((_, r) => setTimeout(() => r(new Error('SW timeout (3s)')), 3000))
+        ]);
+        await reg.showNotification('Tartibla 🔔 Test', {
+          body: 'Notification ishlayapti! Odat eslatmalari ham shunday keladi.',
+          tag: 'tartib-test-' + Date.now(),
+        });
+        App.Toast('✅ Notification yuborildi (ServiceWorker). Tepani tekshiring!', 'success');
+        return;
+      } catch(e) {
+        App.Toast('⚠️ SW: ' + e.message, 'error');
+      }
+    }
+    // 4. To'g'ridan-to'g'ri fallback
+    try {
+      new Notification('Tartibla 🔔 Test', { body: 'Notification ishlayapti!' });
+      App.Toast('✅ Notification yuborildi (direct)', 'success');
+    } catch(e) {
+      App.Toast('❌ Direct ham ishlamadi: ' + e.message, 'error');
+    }
+  }
+
   async function requestNotificationPermission() {
     if (!('Notification' in window)) return false;
     if (Notification.permission === 'granted') return true;
@@ -517,6 +556,10 @@ const Habits = (() => {
       <div class="form-group" id="hb_notify_time_row" style="display:${notify?'block':'none'}">
         <label class="form-label">Bildirishnoma vaqti</label>
         <input class="form-input" id="hb_notify_time" type="time" value="${notifyTime}">
+        <button type="button" onclick="Habits.testNotification()"
+          style="margin-top:8px;width:100%;padding:10px;border:1.5px dashed var(--border);border-radius:10px;background:transparent;color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;font-family:inherit">
+          🔔 Notificationni hozir sinab ko'rish
+        </button>
       </div>`;
   }
 
@@ -730,7 +773,7 @@ const Habits = (() => {
 
   return {
     render, toggle, openDoneModal, confirmDone, moveHabit,
-    setScheduleType, toggleDay, toggleNotifyUI,
+    setScheduleType, toggleDay, toggleNotifyUI, testNotification,
     openAdd, openEdit, selectIcon, save,
     openNote, saveNote,
     openStats, protect,
