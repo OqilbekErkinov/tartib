@@ -284,13 +284,18 @@ const App = (() => {
   });
 
   function installPwa() {
-    if (!_deferredInstall) return;
+    if (!_deferredInstall) {
+      Toast("Ilova allaqachon o'rnatilgan yoki brauzer qo'llab-quvvatlamaydi", 'success');
+      return;
+    }
     _deferredInstall.prompt();
     _deferredInstall.userChoice.then(r => {
       if (r.outcome === 'accepted') localStorage.setItem('tartib_pwa_dismissed', '1');
       _deferredInstall = null;
     });
   }
+
+  function canInstall() { return !!_deferredInstall; }
 
   function dismissInstall() {
     localStorage.setItem('tartib_pwa_dismissed', '1');
@@ -369,5 +374,5 @@ const App = (() => {
     navigate('dashboard');
   }
 
-  return { init, go, renderPage, Toast, Confirm, toggleTheme, installPwa, dismissInstall };
+  return { init, go, renderPage, Toast, Confirm, toggleTheme, installPwa, dismissInstall, canInstall };
 })();

@@ -103,6 +103,19 @@ const Profile = (() => {
         </button>
       </div>
 
+      <!-- App install -->
+      <div class="section-head" style="margin-top:16px"><h2>Ilova</h2></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="profile-action-btn" onclick="App.installPwa()">
+          <span class="profile-action-icon">📱</span>
+          <div class="profile-action-body">
+            <div class="profile-action-title">Ilovani o'rnatish</div>
+            <div class="profile-action-sub">${App.canInstall() ? 'Tartibla ni telefon ekraniga qo\'shing' : 'Ilova allaqachon o\'rnatilgan'}</div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--text3);flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+      </div>
+
       <!-- Account settings -->
       <div class="section-head" style="margin-top:16px"><h2>Hisob sozlamalari</h2></div>
       <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:8px">

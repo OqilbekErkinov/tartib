@@ -170,10 +170,15 @@ const Habits = (() => {
     const notified = JSON.parse(localStorage.getItem(nKey) || '[]');
     let changed    = false;
 
-    // Service Worker orqali notification (Android Chrome uchun zarur)
+    // SW ni 1.5s timeout bilan olamiz — agar vaqtida kelmasa fallback
     let swReg = null;
     if ('serviceWorker' in navigator) {
-      try { swReg = await navigator.serviceWorker.ready; } catch(e) {}
+      try {
+        swReg = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise(r => setTimeout(() => r(null), 1500))
+        ]);
+      } catch(e) {}
     }
 
     for (const h of habits) {
@@ -187,7 +192,8 @@ const Habits = (() => {
 
       const [hh, mm] = nt.split(':').map(Number);
       const diff = nowMins - (hh * 60 + mm);
-      if (diff < 0 || diff > 3) continue;
+      // 0–5 daqiqalik oyna (mobil throttling uchun)
+      if (diff < 0 || diff > 5) continue;
 
       const opts = {
         body: `${h.icon} ${h.name} — vaqti keldi!`,
