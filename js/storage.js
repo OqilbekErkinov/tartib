@@ -22,7 +22,7 @@ const DB = {
       
       if (error && error.code === 'PGRST116') {
         // Yozuv topilmadi, yangi yaratamiz
-        cloudData = { transactions: [], books: [], habits: [], habitLogs: {}, goals: [], subs: [], notes: [], debts: [] };
+        cloudData = { transactions: [], books: [], habits: [], habitLogs: {}, goals: [], subs: [], notes: [], debts: [], budgets: {}, recurring: [] };
         // Localda bo'lsa, uni o'tkazib qo'yamiz (migratsiya)
         cloudData.transactions = this.get('transactions', []);
         cloudData.books = this.get('books', []);
@@ -93,6 +93,12 @@ const DB = {
   
   getDebts() { return this.get('debts', []); },
   saveDebts(d) { this.set('debts', d); },
+
+  getBudgets()  { return this.get('budgets', {}); },
+  saveBudgets(b){ this.set('budgets', b); },
+
+  getRecurring()  { return this.get('recurring', []); },
+  saveRecurring(r){ this.set('recurring', r); },
 };
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }

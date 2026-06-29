@@ -160,8 +160,7 @@ const Books = (() => {
         <select class="form-select" id="bk_status">
           <option value="unread"  ${(data.status||'unread')==='unread'  ?'selected':''}>Yangi (o'qilmagan)</option>
           <option value="reading" ${data.status==='reading'?'selected':''}>O'qilmoqda</option>
-          <option value="read"    ${data.status==='read'   ?'selected':''}>O'qilgan</option>
-          <option value="lent"    ${data.status==='lent'   ?'selected':''}>Berilgan</option>
+          <option value="read"    ${data.status==='read' || data.status==='lent' ?'selected':''}>O'qilgan</option>
         </select>
       </div>
       <div class="form-group">

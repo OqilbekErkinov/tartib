@@ -27,25 +27,41 @@ const Habits = (() => {
   function getTodayLog() { return (DB.getHabitLogs())[todayStr()] || {}; }
 
   function getStreak(habitId) {
-    const logs = DB.getHabitLogs();
+    const logs  = DB.getHabitLogs();
+    const habit = DB.getHabits().find(h => h.id === habitId);
+    if (!habit) return 0;
     let streak = 0;
     const d = new Date();
-    while (true) {
-      const key = d.toISOString().slice(0, 10);
-      if (logs[key]?.[habitId]) { streak++; d.setDate(d.getDate() - 1); }
-      else break;
+    for (let i = 0; i < 365; i++) {
+      const key    = d.toISOString().slice(0, 10);
+      const dayIdx = d.getDay();
+      if (isScheduledForDay(habit, dayIdx)) {
+        if (logs[key]?.[habitId]) { streak++; }
+        else { break; }
+      }
+      d.setDate(d.getDate() - 1);
     }
     return streak;
   }
 
   function getBestStreak(habitId) {
-    const logs = DB.getHabitLogs();
+    const logs  = DB.getHabitLogs();
+    const habit = DB.getHabits().find(h => h.id === habitId);
+    if (!habit) return 0;
     const keys = Object.keys(logs).sort();
+    if (!keys.length) return 0;
     let best = 0, cur = 0;
-    keys.forEach(k => {
-      if (logs[k]?.[habitId]) { cur++; if (cur > best) best = cur; }
-      else cur = 0;
-    });
+    const start = new Date(keys[0]);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const d = new Date(start);
+    while (d <= today) {
+      const key = d.toISOString().slice(0, 10);
+      if (isScheduledForDay(habit, d.getDay())) {
+        if (logs[key]?.[habitId]) { cur++; if (cur > best) best = cur; }
+        else { cur = 0; }
+      }
+      d.setDate(d.getDate() + 1);
+    }
     return best;
   }
 
@@ -194,7 +210,7 @@ const Habits = (() => {
     const notifyOn = !!(h.schedule?.notify);
 
     return `<div class="habit-item ${done?'done-item':''}" style="${!active?'opacity:.35':''}">
-      <div class="habit-check ${done&&active?'checked':''}" ${active?`onclick="Habits.toggle('${h.id}')"`:'style="cursor:default"'}>
+      <div class="habit-check ${done&&active?'checked':''}" ${active && !done?`onclick="Habits.toggle('${h.id}')"`:'style="cursor:default"'}>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <span class="habit-icon">${h.icon}</span>
@@ -204,13 +220,18 @@ const Habits = (() => {
           ${notifyOn?`<span style="font-size:10px;opacity:.45" title="Bildirishnoma: ${h.schedule.notifyTime||''}">🔔</span>`:''}
         </div>
         ${sched?`<div style="font-size:10px;color:var(--text3);font-weight:600;margin-top:1px">${sched}</div>`:''}
-        ${note?`<div style="font-size:10.5px;color:var(--orange-dark);font-weight:700;margin-top:3px;background:var(--orange-light);padding:2px 8px;border-radius:6px;display:inline-block">"${escapeHtml(note)}"</div>`:''}
+        ${done && note?`<div style="font-size:10.5px;color:var(--orange-dark);font-weight:700;margin-top:3px;background:var(--orange-light);padding:2px 8px;border-radius:6px;display:inline-block">"${escapeHtml(note)}"</div>`:''}
         ${heatmap}
         ${bestS>1?`<div style="font-size:9.5px;color:var(--text3);margin-top:3px;font-weight:600">🏆 Eng uzun seriya: ${bestS} kun</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;margin-left:4px">
         ${streak>1?`<span class="habit-streak" style="font-size:10px;padding:2px 5px">🔥${streak}</span>`:''}
         ${active&&done?`<button style="background:none;border:none;font-size:13px;cursor:pointer;padding:2px;line-height:1;-webkit-tap-highlight-color:transparent" onclick="Habits.openNote('${h.id}')" title="Izoh">📝</button>`:''}
+        <button style="background:none;border:none;font-size:13px;cursor:pointer;padding:2px;line-height:1;-webkit-tap-highlight-color:transparent" onclick="Habits.openStats('${h.id}')" title="Statistika">📊</button>
+        ${(()=>{
+          const pk = `tartib_protect_${h.id}_${new Date().toISOString().slice(0,7)}`;
+          return active&&!done&&streak>0&&!localStorage.getItem(pk)?`<button style="background:none;border:none;font-size:13px;cursor:pointer;padding:2px;line-height:1;-webkit-tap-highlight-color:transparent" onclick="Habits.protect('${h.id}')" title="Streak himoyasi">🛡️</button>`:'';
+        })()}
       </div>
       <div style="display:flex;flex-direction:column;gap:3px;margin-left:4px;flex-shrink:0">
         <div style="display:flex;gap:3px">
@@ -317,14 +338,50 @@ const Habits = (() => {
     </div>`;
   }
 
-  // ── TOGGLE (Feature 4 trigger) ────────────────────────────────
+  // ── TOGGLE — faqat done qilish, qaytarish yo'q ───────────────
   function toggle(id) {
+    const logs   = DB.getHabitLogs();
+    const key    = todayStr();
+    const isDone = !!(logs[key]?.[id]);
+    if (isDone) return; // allaqachon bajarilgan — o'zgartirish yo'q
+    openDoneModal(id);
+  }
+
+  function openDoneModal(id) {
+    const h = DB.getHabits().find(x => x.id === id);
+    if (!h) return;
+    openModal(`${h.icon} ${h.name}`, `
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px;font-weight:600">Bugun nima qildingiz? Qisqacha yozing.</p>
+      <div class="form-group">
+        <label class="form-label">Natija <span style="color:#D94040;font-weight:700">*</span></label>
+        <input class="form-input" id="hb_done_note" type="text"
+          placeholder="Masalan: 8 km yugurdim, 30 bet o'qidim..."
+          onkeydown="if(event.key==='Enter')Habits.confirmDone('${id}')">
+        <div id="hb_done_err" style="color:#D94040;font-size:12px;min-height:16px;margin-top:5px"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-full" onclick="closeModal()">Bekor</button>
+        <button class="btn btn-green btn-full" onclick="Habits.confirmDone('${id}')">✅ Bajarildi</button>
+      </div>
+    `);
+    setTimeout(() => document.getElementById('hb_done_note')?.focus(), 320);
+  }
+
+  function confirmDone(id) {
+    const note = document.getElementById('hb_done_note').value.trim();
+    if (!note) {
+      document.getElementById('hb_done_err').textContent = '⚠️ Izoh yozish majburiy!';
+      document.getElementById('hb_done_note').focus();
+      return;
+    }
     const wasComplete = isTodayComplete();
     const logs = DB.getHabitLogs();
     const key  = todayStr();
     if (!logs[key]) logs[key] = {};
-    logs[key][id] = !logs[key][id];
+    logs[key][id]           = true;
+    logs[key][`note_${id}`] = note;
     DB.saveHabitLogs(logs);
+    closeModal();
     App.renderPage('habits');
     if (!wasComplete && isTodayComplete()) {
       setTimeout(triggerConfetti, 250);
@@ -440,11 +497,6 @@ const Habits = (() => {
       <div class="form-group" id="hb_notify_time_row" style="display:${notify?'block':'none'}">
         <label class="form-label">Bildirishnoma vaqti</label>
         <input class="form-input" id="hb_notify_time" type="time" value="${notifyTime}">
-        <button type="button" class="btn btn-ghost btn-sm" style="margin-top:7px;font-size:11px;font-weight:700;width:100%" onclick="Habits.testNotification()">🔔 Hozir test xabarini yuborish</button>
-        <div style="font-size:10.5px;color:var(--text3);margin-top:6px;line-height:1.5">
-          ⚠️ Bildirishnomalar faqat <b>localhost</b> yoki <b>https://</b> da ishlaydi.<br>
-          Lokal fayldan ochilganda (file://) brauzer bloklab qo'yadi.
-        </div>
       </div>`;
   }
 
@@ -568,11 +620,118 @@ const Habits = (() => {
     });
   }
 
+  // ── STATS MODAL ───────────────────────────────────────────────
+  function openStats(id) {
+    const h    = DB.getHabits().find(x => x.id === id);
+    if (!h) return;
+    const logs = DB.getHabitLogs();
+    const str  = getStreak(h.id);
+    const best = getBestStreak(h.id);
+
+    // Jami bajarilgan kunlar
+    const total = Object.values(logs).filter(day => day[h.id]).length;
+
+    // Bu hafta
+    const now      = new Date();
+    const weekDays = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now); d.setDate(now.getDate() - i);
+      weekDays.push(d.toISOString().slice(0,10));
+    }
+    const weekSched = weekDays.filter(k => {
+      const d = new Date(k);
+      return isScheduledForDay(h, d.getDay());
+    });
+    const weekDone = weekSched.filter(k => logs[k]?.[h.id]).length;
+    const weekPct  = weekSched.length ? Math.round(weekDone / weekSched.length * 100) : 0;
+
+    // Bu oy
+    const ym      = now.toISOString().slice(0,7);
+    const allKeys = Object.keys(logs).filter(k => k.startsWith(ym));
+    const monthSched = allKeys.filter(k => {
+      const d = new Date(k);
+      return isScheduledForDay(h, d.getDay());
+    });
+    const monthDone = monthSched.filter(k => logs[k]?.[h.id]).length;
+    const monthPct  = monthSched.length ? Math.round(monthDone / monthSched.length * 100) : 0;
+
+    // So'nggi izohlar
+    const recentNotes = Object.entries(logs)
+      .filter(([k, day]) => day[h.id] && day[`note_${h.id}`])
+      .sort(([a],[b]) => b.localeCompare(a))
+      .slice(0, 5);
+
+    openModal(`${h.icon} ${h.name} — Statistika`, `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:28px;font-weight:900;color:var(--orange)">🔥${str}</div>
+          <div style="font-size:11px;color:var(--text2);font-weight:600;margin-top:2px">Joriy seriya</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:28px;font-weight:900;color:var(--green)">🏆${best}</div>
+          <div style="font-size:11px;color:var(--text2);font-weight:600;margin-top:2px">Eng uzun seriya</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:24px;font-weight:900;color:var(--text)">${total}</div>
+          <div style="font-size:11px;color:var(--text2);font-weight:600;margin-top:2px">Jami bajarildi</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:24px;font-weight:900;color:var(--text)">${monthPct}%</div>
+          <div style="font-size:11px;color:var(--text2);font-weight:600;margin-top:2px">Bu oy (${monthDone}/${monthSched.length})</div>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Bu hafta — ${weekPct}%</div>
+        <div style="display:flex;gap:4px">
+          ${weekDays.map(k => {
+            const d       = new Date(k);
+            const days    = ['Yak','Du','Se','Cho','Pa','Ju','Sha'];
+            const sched   = isScheduledForDay(h, d.getDay());
+            const done    = !!logs[k]?.[h.id];
+            const isToday = k === todayStr();
+            const bg      = !sched ? 'var(--border)' : done ? '#6AE06A' : isToday ? 'rgba(245,143,32,.3)' : '#D94040';
+            const op      = !sched ? '.3' : '1';
+            return `<div style="flex:1;text-align:center">
+              <div style="height:28px;border-radius:5px;background:${bg};opacity:${op};margin-bottom:3px"></div>
+              <div style="font-size:9px;font-weight:700;color:var(--text3)">${days[d.getDay()]}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      ${recentNotes.length ? `
+        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">So'nggi izohlar</div>
+        ${recentNotes.map(([k, day]) => `
+          <div style="display:flex;gap:8px;margin-bottom:8px;background:var(--surface2);border-radius:8px;padding:8px 10px">
+            <div style="font-size:10px;color:var(--text3);font-weight:600;white-space:nowrap;margin-top:1px">${fmtDate(k)}</div>
+            <div style="font-size:12px;color:var(--text);font-weight:600">"${escapeHtml(day[`note_${h.id}`])}"</div>
+          </div>`).join('')}
+      ` : ''}
+    `);
+  }
+
+  // ── STREAK PROTECTION ─────────────────────────────────────────
+  function protect(id) {
+    const pk = `tartib_protect_${id}_${new Date().toISOString().slice(0,7)}`;
+    if (localStorage.getItem(pk)) { App.Toast("Bu oy allaqachon ishlatilgan!", 'error'); return; }
+    App.Confirm("🛡️ Streak himoyasini ishlatmoqchimisiz? Bu oy uchun 1 ta himoya bor.", () => {
+      const logs = DB.getHabitLogs();
+      const key  = todayStr();
+      if (!logs[key]) logs[key] = {};
+      logs[key][id]            = true;
+      logs[key][`note_${id}`] = '🛡️ Streak himoyalandi';
+      DB.saveHabitLogs(logs);
+      localStorage.setItem(pk, '1');
+      App.renderPage('habits');
+      App.Toast('🛡️ Streak himoyalandi! Seriya davom etmoqda.', 'success');
+    });
+  }
+
   return {
-    render, toggle, moveHabit,
+    render, toggle, openDoneModal, confirmDone, moveHabit,
     setScheduleType, toggleDay, toggleNotifyUI,
     openAdd, openEdit, selectIcon, save,
     openNote, saveNote, testNotification,
+    openStats, protect,
     del, checkNotifications,
   };
 })();

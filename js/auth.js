@@ -23,8 +23,8 @@ const Auth = (() => {
       if (event === 'PASSWORD_RECOVERY' || (session && currentFlow === 'new_password')) {
         return;
       }
-      // Foydalanuvchi metadata yangilanganda (ism/familiya) ilovani qayta yuklamaymiz
-      if (event === 'USER_UPDATED' && session) {
+      // Faqat user ob'ektini yangilash — sahifani qayta yuklamaslik
+      if ((event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') && session) {
         currentUser = session.user;
         return;
       }
@@ -41,29 +41,39 @@ const Auth = (() => {
   }
 
   function showApp() {
-    const authContainer = document.getElementById('authContainer');
-    const appContainer = document.getElementById('app');
-    
-    if (authContainer) authContainer.style.display = 'none';
-    if (appContainer) appContainer.style.display = 'flex';
-    
+    document.getElementById('landingPage').style.display  = 'none';
+    document.getElementById('authContainer').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+
     if (typeof App !== 'undefined' && typeof App.init === 'function' && !window.appInitialized) {
-        App.init();
-        window.appInitialized = true;
-    } else if (window.appInitialized) {
-        App.renderPage('dashboard');
+      App.init();
+      window.appInitialized = true;
     }
+    // Ilova allaqachon ishga tushgan bo'lsa — joriy sahifada qolaveradi
   }
 
   function showAuthUI() {
-    const authContainer = document.getElementById('authContainer');
-    const appContainer = document.getElementById('app');
-    
-    if (authContainer) {
-      authContainer.style.display = 'flex';
-      renderAuthUI();
-    }
-    if (appContainer) appContainer.style.display = 'none';
+    // Avval landing page ko'rsatiladi — foydalanuvchi tanlaydi
+    document.getElementById('landingPage').style.display  = 'block';
+    document.getElementById('authContainer').style.display = 'none';
+    document.getElementById('app').style.display = 'none';
+  }
+
+  function showAuthForm(flow = 'login') {
+    currentFlow = flow;
+    document.getElementById('landingPage').style.display  = 'none';
+    document.getElementById('authContainer').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    renderAuthUI();
+    // Focus after transition
+    setTimeout(() => {
+      document.getElementById('authEmail')?.focus();
+    }, 100);
+  }
+
+  function backToLanding() {
+    document.getElementById('landingPage').style.display  = 'block';
+    document.getElementById('authContainer').style.display = 'none';
   }
 
   const EYE_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
@@ -185,7 +195,13 @@ const Auth = (() => {
       `;
     }
 
-    container.innerHTML = `<div class="auth-card">${inner}</div>`;
+    const backBtn = currentFlow !== 'new_password'
+      ? `<button class="auth-back" onclick="Auth.backToLanding()">
+           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+           Orqaga
+         </button>`
+      : '';
+    container.innerHTML = `<div class="auth-card" style="position:relative">${backBtn}${inner}</div>`;
 
     // Focus set
     setTimeout(() => {
@@ -332,7 +348,7 @@ const Auth = (() => {
     return user;
   }
 
-  return { init, getUser, refreshUser, togglePassword, setFlow, moveOtpFocus, login, signup, recoverPassword, verifyOtp, setNewPassword, logout };
+  return { init, getUser, refreshUser, togglePassword, setFlow, showAuthForm, backToLanding, moveOtpFocus, login, signup, recoverPassword, verifyOtp, setNewPassword, logout };
 })();
 
 // Start Auth

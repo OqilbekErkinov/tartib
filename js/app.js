@@ -246,10 +246,116 @@ const App = (() => {
           <div class="more-card-sub">${DB.getNotes().length} ta</div>
         </button>
       </div>
+
+      <div style="background:var(--surface);border-radius:var(--radius-sm);padding:0 16px;box-shadow:var(--shadow-sm);border:1px solid var(--border-light);margin-bottom:6px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border-light)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">${document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙'}</span>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--text)">${document.documentElement.getAttribute('data-theme')==='dark'?'Kungi rejim':'Tungi rejim'}</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:1px">${document.documentElement.getAttribute('data-theme')==='dark'?'Hozir: Qorong\'i':'Hozir: Yorug\''}</div>
+            </div>
+          </div>
+          <button onclick="App.toggleTheme()" style="width:48px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;transition:background .2s;-webkit-tap-highlight-color:transparent;background:${document.documentElement.getAttribute('data-theme')==='dark'?'var(--orange)':'var(--border)'}">
+            <span style="position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.2);left:${document.documentElement.getAttribute('data-theme')==='dark'?'25px':'3px'}"></span>
+          </button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:18px">🔔</span>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--text)">Bildirishnomalar</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:1px">${typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'Yoqilgan ✓' : 'O\'chirilgan'}</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>`;
   }
 
   function go(page) { navigate(page); }
+
+  // ── THEME TOGGLE ─────────────────────────────────────────────
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    localStorage.setItem('tartib_theme', isDark ? 'light' : 'dark');
+    renderPage(currentPage || 'more');
+  }
+
+  function applyTheme() {
+    const saved = localStorage.getItem('tartib_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+
+  // ── PWA INSTALL BANNER ────────────────────────────────────────
+  let _deferredInstall = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    _deferredInstall = e;
+    const dismissed = localStorage.getItem('tartib_pwa_dismissed');
+    if (!dismissed) {
+      const banner = document.getElementById('installBanner');
+      if (banner) banner.style.display = 'flex';
+    }
+  });
+  window.addEventListener('appinstalled', () => {
+    const banner = document.getElementById('installBanner');
+    if (banner) banner.style.display = 'none';
+    localStorage.setItem('tartib_pwa_dismissed', '1');
+  });
+
+  function installPwa() {
+    if (!_deferredInstall) return;
+    _deferredInstall.prompt();
+    _deferredInstall.userChoice.then(r => {
+      if (r.outcome === 'accepted') localStorage.setItem('tartib_pwa_dismissed', '1');
+      _deferredInstall = null;
+    });
+  }
+
+  function dismissInstall() {
+    localStorage.setItem('tartib_pwa_dismissed', '1');
+    const banner = document.getElementById('installBanner');
+    if (banner) banner.style.display = 'none';
+  }
+
+  // ── IN-APP NOTIFICATIONS ──────────────────────────────────────
+  function checkStartupAlerts() {
+    const today    = new Date(); today.setHours(0,0,0,0);
+    const alertKey = `tartib_alerts_${todayStr()}`;
+    if (localStorage.getItem(alertKey)) return; // faqat kuniga bir marta
+
+    const msgs = [];
+
+    // Qarz muddati
+    DB.getDebts().filter(d => !d.paid && d.dueDate).forEach(d => {
+      const due      = new Date(d.dueDate); due.setHours(0,0,0,0);
+      const daysLeft = Math.round((due - today) / 86400000);
+      if (daysLeft < 0) {
+        msgs.push({ text: `🔴 Qarz muddati o'tdi: ${d.person} (${fmtMoney(d.amount)} so'm)`, type: 'error' });
+      } else if (daysLeft <= 3) {
+        msgs.push({ text: `⚠️ ${d.person} qarzi ${daysLeft === 0 ? 'bugun' : daysLeft + ' kunda'} tugaydi (${fmtMoney(d.amount)} so'm)`, type: 'error' });
+      }
+    });
+
+    // Maqsad muddati
+    DB.getGoals().filter(g => !g.done && g.deadline).forEach(g => {
+      const due      = new Date(g.deadline); due.setHours(0,0,0,0);
+      const daysLeft = Math.round((due - today) / 86400000);
+      if (daysLeft < 0) {
+        msgs.push({ text: `🎯 Maqsad muddati o'tdi: "${g.title}"`, type: 'error' });
+      } else if (daysLeft <= 7) {
+        msgs.push({ text: `🎯 "${g.title}" — ${daysLeft === 0 ? 'bugun' : daysLeft + ' kun'} qoldi`, type: 'success' });
+      }
+    });
+
+    if (msgs.length) {
+      localStorage.setItem(alertKey, '1');
+      msgs.forEach((m, i) => setTimeout(() => Toast(m.text, m.type), i * 700 + 800));
+    }
+  }
 
   function updateDate() {
     const el = document.getElementById('headerDate');
@@ -264,13 +370,15 @@ const App = (() => {
   }
 
   function init() {
+    applyTheme();
     document.querySelectorAll('.nav-item').forEach(el => {
       el.addEventListener('click', () => navigate(el.dataset.page));
     });
     updateDate();
     setInterval(updateDate, 1000);
     Habits.checkNotifications();
-    // Minutning boshiga sinxronlashtirish — har minutda aniq tekshiradi
+    Finance.checkRecurring();
+    checkStartupAlerts();
     const msToNextMin = (60 - new Date().getSeconds()) * 1000 + 500;
     setTimeout(() => {
       Habits.checkNotifications();
@@ -279,5 +387,5 @@ const App = (() => {
     navigate('dashboard');
   }
 
-  return { init, go, renderPage, Toast, Confirm };
+  return { init, go, renderPage, Toast, Confirm, toggleTheme, installPwa, dismissInstall };
 })();

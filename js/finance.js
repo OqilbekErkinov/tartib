@@ -13,8 +13,8 @@ const Finance = (() => {
     other:  { label: 'Boshqa',        icon: '📌', color: '#64748B' },
   };
 
-  let debtTab = 'borrowed';
-  let txLimit = 40;
+  let debtTab  = 'borrowed';
+  let txLimit  = 40;
 
   // ── MAIN RENDER ──────────────────────────────────────────────
   function render() {
@@ -41,16 +41,31 @@ const Finance = (() => {
     });
     const catEntries = Object.entries(catMap).sort((a,b) => b[1] - a[1]);
 
+    const budgets  = DB.getBudgets();
     const catHtml = catEntries.length ? `
-      <div class="section-head"><h2>Kategoriyalar</h2></div>
+      <div class="section-head">
+        <h2>Kategoriyalar</h2>
+        <button onclick="Finance.openBudgetModal()" style="border:none;background:var(--orange-light);color:var(--orange-dark);font-size:11px;font-weight:700;padding:5px 12px;border-radius:6px;cursor:pointer">💰 Byudjet</button>
+      </div>
       ${catEntries.map(([k, v]) => {
-        const c = CATS[k] || CATS.other;
-        const pct = expense ? Math.round(v / expense * 100) : 0;
+        const c      = CATS[k] || CATS.other;
+        const pct    = expense ? Math.round(v / expense * 100) : 0;
+        const budget = budgets[k] || 0;
+        const bPct   = budget ? Math.min(100, Math.round(v / budget * 100)) : 0;
+        const over   = budget && v > budget;
+        const budgetRow = budget ? `
+          <div style="margin-top:3px;font-size:10px;font-weight:600;color:${over ? '#D94040' : 'var(--text3)'}">
+            ${over ? '⚠️ ' : ''}${fmtMoney(v)} / ${fmtMoney(budget)} so'm byudjet
+            <div style="height:3px;background:var(--border);border-radius:2px;margin-top:2px">
+              <div style="height:100%;width:${bPct}%;border-radius:2px;background:${over ? '#D94040' : 'var(--green)'}"></div>
+            </div>
+          </div>` : '';
         return `<div class="cat-row">
           <span class="cat-row-icon">${c.icon}</span>
           <div class="cat-row-body">
             <div class="cat-row-name">${c.label}</div>
             <div class="cat-row-bar"><div class="cat-row-fill" style="width:${pct}%;background:${c.color};height:100%"></div></div>
+            ${budgetRow}
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div class="cat-row-amt">${fmtMoney(v)}</div>
@@ -119,6 +134,7 @@ const Finance = (() => {
       </div>
 
       ${catHtml}
+      ${renderRecurring()}
       ${txHtml}
       ${showMoreBtn}
 
@@ -397,9 +413,170 @@ const Finance = (() => {
     App.renderPage('finance');
   }
 
+  // ── BUDGET MODAL ──────────────────────────────────────────────
+  function openBudgetModal() {
+    const budgets  = DB.getBudgets();
+    const expCats  = ['food','cafe','trans','cloth','health','edu','entmt','house','other'];
+    openModal('💰 Oylik byudjet', `
+      <p style="font-size:12px;color:var(--text2);margin-bottom:14px">Har bir kategoriya uchun oylik xarajat limitini belgilang</p>
+      ${expCats.map(k => {
+        const c = CATS[k];
+        return `<div class="form-group" style="margin-bottom:10px">
+          <label class="form-label">${c.icon} ${c.label}</label>
+          <input class="form-input" id="bgt_${k}" type="text" inputmode="numeric"
+            placeholder="0 = cheksiz" oninput="numInput(this)"
+            value="${budgets[k] ? fmtMoney(budgets[k]) : ''}">
+        </div>`;
+      }).join('')}
+      <button class="btn btn-primary btn-full" style="margin-top:4px" onclick="Finance.saveBudgets()">Saqlash</button>
+    `);
+  }
+
+  function saveBudgets() {
+    const expCats = ['food','cafe','trans','cloth','health','edu','entmt','house','other'];
+    const budgets = {};
+    expCats.forEach(k => {
+      const val = parseAmount(document.getElementById(`bgt_${k}`)?.value || '');
+      if (val > 0) budgets[k] = val;
+    });
+    DB.saveBudgets(budgets);
+    closeModal();
+    App.renderPage('finance');
+    App.Toast('Byudjet saqlandi ✓', 'success');
+  }
+
+  // ── RECURRING TRANSACTIONS ────────────────────────────────────
+  function renderRecurring() {
+    const recs = DB.getRecurring();
+    if (!recs.length) return '';
+    return `
+      <div class="section-head">
+        <h2>🔁 Takroriy</h2>
+        <button onclick="Finance.openAddRecurring()" style="border:none;background:var(--surface2);color:var(--text2);font-size:11px;font-weight:700;padding:5px 12px;border-radius:6px;cursor:pointer;border:1px solid var(--border)">+ Yangi</button>
+      </div>
+      ${recs.map(r => {
+        const c    = CATS[r.cat] || CATS.other;
+        const sign = r.type === 'income' ? '+' : '−';
+        const bc   = r.type === 'income' ? 'var(--green)' : '#D94040';
+        return `<div class="list-item" style="border-left:3px solid ${bc};opacity:.85">
+          <div class="list-item-icon" style="background:${c.color}18">${c.icon}</div>
+          <div class="list-item-body">
+            <div class="list-item-title">${escapeHtml(r.note) || c.label} <span style="font-size:10px;background:var(--orange-light);color:var(--orange-dark);padding:1px 6px;border-radius:4px;font-weight:700;margin-left:4px">🔁 har oy ${r.day}-kuni</span></div>
+            <div class="list-item-sub">${c.label}</div>
+          </div>
+          <div class="list-item-right">
+            <div style="font-weight:800;font-size:14px;color:${bc}">${sign}${fmtMoney(r.amount)}</div>
+            <button class="action-del" onclick="Finance.delRecurring('${r.id}')">×</button>
+          </div>
+        </div>`;
+      }).join('')}`;
+  }
+
+  function openAddRecurring() {
+    const expCats    = ['food','cafe','trans','cloth','health','edu','entmt','house','other'];
+    const incomeCats = ['salary','gift','other'];
+    openModal('🔁 Takroriy to\'lov qo\'shish', `
+      <div class="form-group">
+        <label class="form-label">Turi</label>
+        <select class="form-select" id="rc_type" onchange="Finance._rcToggleCats(this.value)">
+          <option value="expense">− Xarajat</option>
+          <option value="income">+ Daromad</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kategoriya</label>
+        <select class="form-select" id="rc_cat">
+          ${expCats.map(k => `<option value="${k}">${CATS[k].icon} ${CATS[k].label}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Miqdor (so'm)</label>
+        <input class="form-input" id="rc_amount" type="text" inputmode="numeric" placeholder="0"
+          oninput="numInput(this)" style="font-size:20px;font-weight:800">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Oyning necha-kuni</label>
+          <input class="form-input" id="rc_day" type="number" min="1" max="28" placeholder="1" value="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Izoh (ixtiyoriy)</label>
+          <input class="form-input" id="rc_note" type="text" placeholder="Masalan: Ijara">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" style="margin-top:4px" onclick="Finance.saveRecurring()">Saqlash</button>
+    `);
+    setTimeout(() => document.getElementById('rc_amount')?.focus(), 320);
+  }
+
+  function _rcToggleCats(type) {
+    const expCats    = ['food','cafe','trans','cloth','health','edu','entmt','house','other'];
+    const incomeCats = ['salary','gift','other'];
+    const cats = type === 'income' ? incomeCats : expCats;
+    const sel = document.getElementById('rc_cat');
+    if (sel) sel.innerHTML = cats.map(k => `<option value="${k}">${CATS[k].icon} ${CATS[k].label}</option>`).join('');
+  }
+
+  function saveRecurring() {
+    const amount = parseAmount(document.getElementById('rc_amount').value);
+    if (!amount || amount <= 0) { App.Toast('Miqdorni kiriting'); return; }
+    const recs = DB.getRecurring();
+    recs.push({
+      id:     uid(),
+      type:   document.getElementById('rc_type').value,
+      cat:    document.getElementById('rc_cat').value,
+      amount,
+      day:    parseInt(document.getElementById('rc_day').value) || 1,
+      note:   document.getElementById('rc_note').value.trim(),
+    });
+    DB.saveRecurring(recs);
+    closeModal();
+    App.renderPage('finance');
+    App.Toast('Takroriy to\'lov saqlandi ✓', 'success');
+  }
+
+  function delRecurring(id) {
+    App.Confirm("O'chirishni tasdiqlaysizmi?", () => {
+      DB.saveRecurring(DB.getRecurring().filter(r => r.id !== id));
+      App.renderPage('finance');
+    });
+  }
+
+  function checkRecurring() {
+    const recs   = DB.getRecurring();
+    if (!recs.length) return;
+    const now    = new Date();
+    const today  = now.getDate();
+    const ym     = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const txs    = DB.getTransactions();
+    let added    = 0;
+    recs.forEach(r => {
+      if (today < r.day) return; // muddat kelmagan
+      const exists = txs.some(t => t.recurringId === r.id && (t.date || '').startsWith(ym));
+      if (!exists) {
+        txs.push({
+          id:          uid(),
+          recurringId: r.id,
+          type:        r.type,
+          amount:      r.amount,
+          cat:         r.cat,
+          note:        r.note || '',
+          date:        `${ym}-${String(r.day).padStart(2,'0')}`,
+        });
+        added++;
+      }
+    });
+    if (added) {
+      DB.saveTransactions(txs);
+      setTimeout(() => App.Toast(`🔁 ${added} ta takroriy to'lov avtomatik qo'shildi`, 'success'), 1200);
+    }
+  }
+
   return {
     render, setDebtTab, scrollToDebts, showMoreTx,
     openAdd, openEditTx, saveTx, updateTx, delTx,
     openAddDebt, openEditDebt, saveDebt, updateDebt, payDebt, delDebt,
+    openBudgetModal, saveBudgets,
+    openAddRecurring, _rcToggleCats, saveRecurring, delRecurring, checkRecurring,
   };
 })();

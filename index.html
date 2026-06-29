@@ -12,10 +12,173 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Landing Page -->
+  <div id="landingPage" style="display:none">
+
+    <!-- HERO -->
+    <section class="lp-hero">
+      <div class="lp-deco" style="top:-80px;right:-80px;width:260px;height:260px;background:rgba(245,143,32,.07)"></div>
+      <div class="lp-deco" style="bottom:-60px;left:-70px;width:190px;height:190px;background:rgba(245,143,32,.05)"></div>
+
+      <div class="lp-logo-row">
+        <div class="lp-logo-mark">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <rect x="2" y="2" width="6" height="6" rx="1.5" fill="rgba(255,255,255,.92)"/>
+            <rect x="12" y="2" width="6" height="6" rx="1.5" fill="rgba(255,255,255,.92)"/>
+            <rect x="2" y="12" width="6" height="6" rx="1.5" fill="rgba(255,255,255,.92)"/>
+            <rect x="12" y="12" width="6" height="6" rx="1.5" fill="rgba(255,255,255,.92)"/>
+          </svg>
+        </div>
+        <span class="lp-brand-name">TARTIBLA</span>
+      </div>
+
+      <h1 class="lp-h1">Hayotingizni<br><em>tartibga</em><br>soling</h1>
+      <p class="lp-sub">Moliya, odatlar, kitoblar va maqsadlar — barchasi bitta aqlli ilovada. Xavfsiz, bepul, qulay.</p>
+
+      <div class="lp-chips">
+        <span class="lp-chip">💰 Moliya</span>
+        <span class="lp-chip">✅ Odatlar</span>
+        <span class="lp-chip">📚 Kitoblar</span>
+        <span class="lp-chip">🎯 Maqsadlar</span>
+        <span class="lp-chip">📝 Eslatmalar</span>
+        <span class="lp-chip">📦 Obunalar</span>
+      </div>
+
+      <button class="lp-btn-main" onclick="Auth.showAuthForm('signup')">✨ Bepul boshlash</button>
+      <button class="lp-btn-sec"  onclick="Auth.showAuthForm('login')">Allaqachon hisobim bor →</button>
+    </section>
+
+    <!-- STATS BAR -->
+    <div class="lp-stats">
+      <div class="lp-stat">
+        <div class="lp-stat-val">6+</div>
+        <div class="lp-stat-lbl">Funksiya</div>
+      </div>
+      <div class="lp-stat">
+        <div class="lp-stat-val">100%</div>
+        <div class="lp-stat-lbl">Bepul</div>
+      </div>
+      <div class="lp-stat">
+        <div class="lp-stat-val">☁️</div>
+        <div class="lp-stat-lbl">Cloud sync</div>
+      </div>
+    </div>
+
+    <!-- FEATURES -->
+    <section class="lp-section">
+      <div class="lp-section-title">Nima qila olasiz?</div>
+      <div class="lp-grid">
+
+        <div class="lp-card">
+          <div class="lp-card-accent" style="background:linear-gradient(90deg,#F58F20,transparent)"></div>
+          <span class="lp-card-icon">💰</span>
+          <div class="lp-card-name">Moliya</div>
+          <div class="lp-card-desc">Daromad va xarajatlarni kuzating. Byudjet belgilang, qarzlarni boshqaring.</div>
+        </div>
+
+        <div class="lp-card">
+          <div class="lp-card-accent" style="background:linear-gradient(90deg,#467434,transparent)"></div>
+          <span class="lp-card-icon">✅</span>
+          <div class="lp-card-name">Odatlar</div>
+          <div class="lp-card-desc">Kunlik odatlar shakllantiring. Streak saqlang, statistika kuzating.</div>
+        </div>
+
+        <div class="lp-card">
+          <div class="lp-card-accent" style="background:linear-gradient(90deg,#3B82F6,transparent)"></div>
+          <span class="lp-card-icon">📚</span>
+          <div class="lp-card-name">Kitoblar</div>
+          <div class="lp-card-desc">Kutubxonangizni boshqaring. O'qigan, o'qimoqchi kitoblaringiz.</div>
+        </div>
+
+        <div class="lp-card">
+          <div class="lp-card-accent" style="background:linear-gradient(90deg,#F58F20,transparent)"></div>
+          <span class="lp-card-icon">🎯</span>
+          <div class="lp-card-name">Maqsadlar</div>
+          <div class="lp-card-desc">Hayotiy maqsadlarga qadamba-qadam ering. Progress kuzating.</div>
+        </div>
+
+        <div class="lp-card">
+          <div class="lp-card-accent" style="background:linear-gradient(90deg,#A855F7,transparent)"></div>
+          <span class="lp-card-icon">📝</span>
+          <div class="lp-card-name">Eslatmalar</div>
+          <div class="lp-card-desc">Muhim fikr va g'oyalarni saqlab qo'ying. Istalgan vaqt o'qing.</div>
+        </div>
+
+        <div class="lp-card">
+          <div class="lp-card-accent" style="background:linear-gradient(90deg,#06B6D4,transparent)"></div>
+          <span class="lp-card-icon">📦</span>
+          <div class="lp-card-name">Obunalar</div>
+          <div class="lp-card-desc">Oylik to'lovlarni kuzating. Muddatlar haqida ogohlantirish oling.</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- BENEFITS -->
+    <section class="lp-benefits">
+      <div class="lp-section-title" style="padding-top:4px">Nima uchun Tartibla?</div>
+
+      <div class="lp-benefit">
+        <div class="lp-benefit-icon">🔒</div>
+        <div>
+          <div class="lp-benefit-title">Xavfsiz va ishonchli</div>
+          <div class="lp-benefit-desc">Ma'lumotlaringiz Supabase bulut xizmatida himoyalangan. Parol bilan kirish, faqat siz ko'rasiz.</div>
+        </div>
+      </div>
+
+      <div class="lp-benefit">
+        <div class="lp-benefit-icon">📱</div>
+        <div>
+          <div class="lp-benefit-title">Telefonga o'rnatish mumkin</div>
+          <div class="lp-benefit-desc">PWA texnologiyasi orqali telefon ekraniga qo'shing. Internet bo'lmasa ham ishlaydi.</div>
+        </div>
+      </div>
+
+      <div class="lp-benefit">
+        <div class="lp-benefit-icon">☁️</div>
+        <div>
+          <div class="lp-benefit-title">Barcha qurilmalarda sinxron</div>
+          <div class="lp-benefit-desc">Telefon, planshet yoki kompyuterdan kiring — ma'lumotlar har yerda bir xil.</div>
+        </div>
+      </div>
+
+      <div class="lp-benefit">
+        <div class="lp-benefit-icon">🆓</div>
+        <div>
+          <div class="lp-benefit-title">Mutlaqo bepul</div>
+          <div class="lp-benefit-desc">Hech qanday to'lov yoki reklama yo'q. Barcha funksiyalar bepul, hech qanday limit yo'q.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER CTA -->
+    <section class="lp-footer">
+      <div class="lp-footer-title">Hoziroq boshlang!</div>
+      <p class="lp-footer-sub">Ro'yxatdan o'tish 30 soniyadan kam vaqt oladi. Hech narsa to'lamasdan.</p>
+      <button class="lp-btn-main" onclick="Auth.showAuthForm('signup')" style="max-width:340px">✨ Bepul ro'yxatdan o'tish</button>
+      <div class="lp-signin-row">
+        Hisobingiz bormi? <button onclick="Auth.showAuthForm('login')">Tizimga kirish →</button>
+      </div>
+    </section>
+
+  </div>
+
   <!-- Auth Container -->
   <div id="authContainer" class="auth-container" style="display: none;"></div>
 
   <div id="app" style="display: none;">
+    <!-- PWA Install Banner -->
+    <div id="installBanner" class="install-banner" style="display:none">
+      <div class="install-banner-text">
+        📱 Tartibla ilovasini o'rnating
+        <span>Qulay va tez ishlatish uchun</span>
+      </div>
+      <div class="install-banner-btns">
+        <button class="install-banner-btn primary" onclick="App.installPwa()">O'rnatish</button>
+        <button class="install-banner-btn ghost"   onclick="App.dismissInstall()">✕</button>
+      </div>
+    </div>
+
     <!-- Top Header -->
     <header class="top-header" id="topHeader">
       <div class="header-row1">

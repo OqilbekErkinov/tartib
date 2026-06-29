@@ -33,9 +33,42 @@ const Goals = (() => {
     const pct = g.target
       ? Math.min(100, Math.round((g.current || 0) / g.target * 100))
       : (g.done ? 100 : 0);
-    const deadline = g.deadline
-      ? `<span class="badge ${new Date(g.deadline) < new Date() && !g.done ? 'badge-red' : 'badge-orange'}">${fmtDate(g.deadline)}</span>`
+    const now      = new Date(); now.setHours(0,0,0,0);
+    const isOverdue = g.deadline && new Date(g.deadline) < now && !g.done;
+    const daysLeft  = g.deadline && !g.done ? Math.ceil((new Date(g.deadline) - now) / 86400000) : null;
+    const deadline  = g.deadline
+      ? `<span class="badge ${isOverdue ? 'badge-red' : daysLeft <= 7 ? 'badge-red' : 'badge-orange'}" style="font-size:10px">${isOverdue ? '⚠️ ' : daysLeft === 0 ? '🔴 Bugun! ' : ''}${fmtDate(g.deadline)}</span>`
       : '';
+    const steps = g.steps || [];
+    const stepsDone = steps.filter(s => s.done).length;
+    const stepsHtml = steps.length ? `
+      <div style="margin:8px 0;border-top:1px solid var(--border-light);padding-top:8px">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px">QADAMLAR (${stepsDone}/${steps.length})</div>
+        ${steps.map(s => `
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+            <button onclick="Goals.toggleStep('${g.id}','${s.id}')"
+              style="width:18px;height:18px;border-radius:5px;border:2px solid ${s.done ? 'var(--green)' : 'var(--border)'};background:${s.done ? 'var(--green)' : 'transparent'};cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent">
+              ${s.done ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+            </button>
+            <span style="font-size:13px;font-weight:600;color:var(--text);${s.done ? 'text-decoration:line-through;opacity:.45' : ''}">${escapeHtml(s.text)}</span>
+            ${!g.done ? `<button onclick="Goals.delStep('${g.id}','${s.id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;margin-left:auto;padding:2px;-webkit-tap-highlight-color:transparent">×</button>` : ''}
+          </div>`).join('')}
+        ${!g.done ? `
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <input id="step_in_${g.id}" class="form-input" type="text" placeholder="Yangi qadam..."
+              style="font-size:12px;padding:6px 10px"
+              onkeydown="if(event.key==='Enter')Goals.addStep('${g.id}')">
+            <button onclick="Goals.addStep('${g.id}')" style="flex-shrink:0;border:none;background:var(--orange);color:#fff;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">+</button>
+          </div>` : ''}
+      </div>` : (!g.done ? `
+      <div style="margin:6px 0">
+        <div style="display:flex;gap:6px">
+          <input id="step_in_${g.id}" class="form-input" type="text" placeholder="Qadam qo'shish..."
+            style="font-size:12px;padding:6px 10px"
+            onkeydown="if(event.key==='Enter')Goals.addStep('${g.id}')">
+          <button onclick="Goals.addStep('${g.id}')" style="flex-shrink:0;border:none;background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">+</button>
+        </div>
+      </div>` : '');
 
     return `<div class="goal-card ${g.done ? 'done' : ''}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:${g.type==='numeric'?'12px':'6px'}">
@@ -66,10 +99,45 @@ const Goals = (() => {
         </div>
       ` : ''}
 
+      ${stepsHtml}
+
       ${!g.done
-        ? `<button class="btn btn-green btn-sm" onclick="Goals.complete('${g.id}')">✓ Bajarildi deb belgilash</button>`
+        ? `<button class="btn btn-green btn-sm" style="margin-top:6px" onclick="Goals.complete('${g.id}')">✓ Bajarildi deb belgilash</button>`
         : `<span class="badge badge-green">✓ Bajarildi</span>`}
     </div>`;
+  }
+
+  function toggleStep(goalId, stepId) {
+    const goals = DB.getGoals();
+    const g = goals.find(x => x.id === goalId);
+    if (!g) return;
+    if (!g.steps) g.steps = [];
+    const s = g.steps.find(x => x.id === stepId);
+    if (s) s.done = !s.done;
+    DB.saveGoals(goals);
+    App.renderPage('goals');
+  }
+
+  function addStep(goalId) {
+    const input = document.getElementById(`step_in_${goalId}`);
+    const text  = input?.value.trim();
+    if (!text) return;
+    const goals = DB.getGoals();
+    const g = goals.find(x => x.id === goalId);
+    if (!g) return;
+    if (!g.steps) g.steps = [];
+    g.steps.push({ id: uid(), text, done: false });
+    DB.saveGoals(goals);
+    App.renderPage('goals');
+  }
+
+  function delStep(goalId, stepId) {
+    const goals = DB.getGoals();
+    const g = goals.find(x => x.id === goalId);
+    if (!g || !g.steps) return;
+    g.steps = g.steps.filter(s => s.id !== stepId);
+    DB.saveGoals(goals);
+    App.renderPage('goals');
   }
 
   // ── GOAL FORM (shared for add & edit) ────────────────────────
@@ -180,5 +248,5 @@ const Goals = (() => {
     });
   }
 
-  return { render, openAdd, openEdit, toggleNumeric, save, updateAmount, complete, del };
+  return { render, openAdd, openEdit, toggleNumeric, save, updateAmount, complete, del, toggleStep, addStep, delStep };
 })();
