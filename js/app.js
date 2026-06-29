@@ -49,6 +49,7 @@ const App = (() => {
     notes:         { title: 'Eslatmalar',    addFn: () => Notes.openAdd() },
     profile:       { title: 'Profil',        addFn: null },
     more:          { title: "Ko'proq",       addFn: null },
+    timer:         { title: 'Timer',         addFn: null },
   };
 
   let currentPage = 'dashboard';
@@ -85,6 +86,7 @@ const App = (() => {
       case 'notes':         html = Notes.render(); break;
       case 'profile':       html = Profile.render(); break;
       case 'more':          html = renderMore(); break;
+      case 'timer':         html = Timer.render(); break;
       default:              html = renderDashboard();
     }
 
@@ -245,6 +247,11 @@ const App = (() => {
           <div class="more-card-title">Eslatmalar</div>
           <div class="more-card-sub">${DB.getNotes().length} ta</div>
         </button>
+        <button class="more-card" onclick="App.go('timer')">
+          <div class="more-card-icon">⏱️</div>
+          <div class="more-card-title">Timer</div>
+          <div class="more-card-sub">Fokus & soat</div>
+        </button>
       </div>
 
     </div>`;
@@ -363,6 +370,17 @@ const App = (() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
+
+    // Internet qaytsa — kutilgan sinxronlashni amalga oshirish
+    window.addEventListener('online', () => {
+      if (localStorage.getItem('tartib_pending_sync')) {
+        DB.syncCloud();
+        Toast('Internet qaytdi — ma\'lumotlar sinxronlanmoqda...', 'success');
+      }
+    });
+    window.addEventListener('offline', () => {
+      Toast('Internet yo\'q — o\'zgarishlar localda saqlanadi', 'error');
+    });
 
     Habits.checkNotifications();
     Finance.checkRecurring();

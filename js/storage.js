@@ -51,6 +51,7 @@ const DB = {
         await sb.from('user_data')
           .update({ data: cloudData, updated_at: new Date().toISOString() })
           .eq('user_id', user.id);
+        localStorage.removeItem('tartib_pending_sync');
       }
     } catch(e) { console.error("Cloud sync error:", e); }
   },
@@ -66,6 +67,8 @@ const DB = {
       clearTimeout(_syncTimer);
       _syncTimer = setTimeout(() => DB.syncCloud(), 1500);
     }
+    // Oflayn o'zgarishlarni kuzatish uchun flag
+    localStorage.setItem('tartib_pending_sync', '1');
     // Lokalga ham saqlab qo'yamiz zaxira uchun
     try { localStorage.setItem('cp_'+key, JSON.stringify(val)); } catch {}
   },

@@ -1403,6 +1403,182 @@ body {
 }
 .auth-back:hover { color: rgba(255,255,255,.8); }
 
+/* ===== TIMER ===== */
+.timer-page { padding-bottom: 16px; }
+
+.timer-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 26px;
+  justify-content: center;
+}
+.timer-preset-btn {
+  padding: 7px 15px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+  -webkit-tap-highlight-color: transparent;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.timer-preset-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+.timer-preset-btn:active  { transform: scale(.95); }
+
+.timer-ring-wrap {
+  position: relative;
+  width: 230px;
+  height: 230px;
+  margin: 0 auto 30px;
+}
+.timer-svg { width: 100%; height: 100%; }
+.timer-ring-bg { fill: none; stroke: var(--surface2); stroke-width: 10; }
+.timer-ring-fg { fill: none; stroke: var(--orange); stroke-width: 10; stroke-linecap: round; }
+.timer-display-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.timer-time {
+  font-size: 50px;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: -3px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.timer-status {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  margin-top: 8px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+}
+
+.timer-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  margin-bottom: 28px;
+}
+.timer-ctrl-btn {
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s, box-shadow .15s;
+  font-family: var(--font);
+}
+.timer-ctrl-btn:active { transform: scale(.9); }
+.timer-ctrl-btn.main {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--orange);
+  color: #fff;
+  box-shadow: 0 6px 24px rgba(245,143,32,.45);
+}
+.timer-ctrl-btn.main:active { box-shadow: 0 2px 8px rgba(245,143,32,.3); }
+.timer-ctrl-btn.secondary {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--surface2);
+  color: var(--text2);
+  border: 1.5px solid var(--border);
+}
+
+.timer-clock-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 17px;
+  margin-top: 8px;
+  border-radius: 16px;
+  border: none;
+  background: #1C1C1E;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity .15s, transform .12s;
+  letter-spacing: .2px;
+}
+.timer-clock-btn:active { opacity: .8; transform: scale(.98); }
+[data-theme="dark"] .timer-clock-btn { background: #2C2C2E; }
+
+.timer-custom-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.timer-custom-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin-bottom: 10px;
+}
+.timer-custom-row { display: flex; gap: 8px; }
+.timer-custom-input { flex: 1; text-align: center; font-weight: 800; font-size: 16px; }
+
+/* ── CLOCK OVERLAY ─────────────────────────────────────────── */
+.clock-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.clock-content { text-align: center; padding: 20px; }
+.clock-time {
+  font-size: 21vw;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -3px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.clock-date {
+  font-size: 4.5vw;
+  font-weight: 600;
+  color: rgba(255,255,255,.4);
+  margin-top: 16px;
+  letter-spacing: .3px;
+}
+.clock-hint {
+  font-size: 3vw;
+  color: rgba(255,255,255,.18);
+  margin-top: 36px;
+  font-weight: 500;
+}
+@media (orientation: landscape) {
+  .clock-time { font-size: 20vh; letter-spacing: -5px; }
+  .clock-date { font-size: 3.5vh; margin-top: 10px; }
+  .clock-hint { font-size: 2.5vh; margin-top: 20px; }
+}
+
 /* ── CONFETTI ──────────────────────────────────────────────── */
 @keyframes confetti-fall {
   0%   { transform: translateY(-10px) rotate(0deg) scale(1);   opacity: 1; }
