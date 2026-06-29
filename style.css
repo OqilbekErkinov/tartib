@@ -1,4 +1,4 @@
-/* ===== RESET ===== */
+﻿/* ===== RESET ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ===== DESIGN TOKENS ===== */
@@ -170,7 +170,7 @@ body {
 }
 .main-content::-webkit-scrollbar { width: 0; }
 
-/* ===== BOTTOM NAV — Floating Dark Pill ===== */
+/* ===== BOTTOM NAV â€” Floating Dark Pill ===== */
 .bottom-nav {
   position: fixed;
   bottom: calc(10px + var(--safe-bottom));
@@ -225,7 +225,7 @@ body {
   transition: color .18s;
 }
 
-/* Active state — orange pill */
+/* Active state â€” orange pill */
 .nav-item.active { color: #ffffff; }
 .nav-item.active .nav-inner {
   background: var(--orange);
@@ -803,7 +803,7 @@ body {
 }
 
 .auth-card {
-  background: var(--bg2);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 20px;
   padding: 30px 20px;
@@ -900,6 +900,135 @@ body {
   min-height: 18px;
 }
 
+/* ===== PROFILE PAGE ===== */
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #231D11 0%, #363028 100%);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-dark);
+  border: 1px solid rgba(245,143,32,.18);
+}
+.profile-avatar {
+  width: 62px; height: 62px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--orange) 0%, #D97A10 100%);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(245,143,32,.45);
+  letter-spacing: -.5px;
+}
+.profile-info { flex: 1; min-width: 0; }
+.profile-name {
+  font-size: 17px;
+  font-weight: 900;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -.2px;
+}
+.profile-email {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+.profile-since {
+  font-size: 12px;
+  color: rgba(255,255,255,.45);
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+.profile-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.profile-stat-item {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 12px 6px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.profile-stat-icon  { font-size: 20px; line-height: 1; margin-bottom: 4px; }
+.profile-stat-value { font-size: 16px; font-weight: 900; color: var(--text); letter-spacing: -.3px; }
+.profile-stat-label { font-size: 9px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .3px; margin-top: 1px; }
+.profile-stat-sub   { font-size: 9px; color: var(--text3); font-weight: 500; }
+
+.profile-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 15px;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: transform .12s, box-shadow .12s;
+  -webkit-tap-highlight-color: transparent;
+  font-family: var(--font);
+}
+.profile-action-btn:active { transform: scale(.98); box-shadow: var(--shadow-xs); }
+.profile-action-btn.profile-action-danger {
+  border-color: rgba(217,64,64,.25);
+  background: rgba(217,64,64,.04);
+}
+.profile-action-icon { font-size: 22px; flex-shrink: 0; }
+.profile-action-body { flex: 1; min-width: 0; }
+.profile-action-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.profile-action-sub   { font-size: 12px; color: var(--text2); margin-top: 2px; font-weight: 500; }
+
+/* More page profile shortcut card */
+.more-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #231D11 0%, #363028 100%);
+  border: 1px solid rgba(245,143,32,.2);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-dark);
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: transform .12s;
+  -webkit-tap-highlight-color: transparent;
+  font-family: var(--font);
+}
+.more-profile-card:active { transform: scale(.98); }
+.more-profile-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--orange), #D97A10);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(245,143,32,.4);
+}
+
 /* ===== UI TOAST ===== */
 .ui-toast {
   position: fixed;
@@ -929,3 +1058,10 @@ body {
   background: var(--green);
 }
 
+
+/* ── CONFETTI ──────────────────────────────────────────────── */
+@keyframes confetti-fall {
+  0%   { transform: translateY(-10px) rotate(0deg) scale(1);   opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(105vh) rotate(720deg) scale(.6); opacity: 0; }
+}

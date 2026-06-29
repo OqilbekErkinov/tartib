@@ -52,7 +52,7 @@ const Subscriptions = (() => {
     return `<div class="list-item" style="border-left:3px solid ${s.paused?'var(--border)':'var(--orange)'};${s.paused?'opacity:.55':''}">
       <div class="list-item-icon" style="background:var(--orange-light);font-size:20px">${icon}</div>
       <div class="list-item-body">
-        <div class="list-item-title">${s.name}</div>
+        <div class="list-item-title">${escapeHtml(s.name)}</div>
         <div class="list-item-sub" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           ${periods[s.period] || ''} ${dueBadge}
         </div>

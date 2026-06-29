@@ -1,4 +1,15 @@
 let cloudData = null;
+let _syncTimer = null;
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 const DB = {
   // Load from Supabase on login
@@ -52,7 +63,8 @@ const DB = {
   set(key, val) {
     if (cloudData) {
       cloudData[key] = val;
-      this.syncCloud(); // async save
+      clearTimeout(_syncTimer);
+      _syncTimer = setTimeout(() => DB.syncCloud(), 1500);
     }
     // Lokalga ham saqlab qo'yamiz zaxira uchun
     try { localStorage.setItem('cp_'+key, JSON.stringify(val)); } catch {}

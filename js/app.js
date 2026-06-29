@@ -40,14 +40,15 @@ const App = (() => {
   }
 
   const PAGE_CONFIG = {
-    dashboard:     { title: 'Tartibla',           addFn: null },
-    finance:       { title: 'Moliya',           addFn: () => Finance.openAdd('expense') },
-    books:         { title: 'Kitoblar',         addFn: () => Books.openAdd() },
-    habits:        { title: 'Odatlar',          addFn: () => Habits.openAdd() },
-    goals:         { title: 'Maqsadlar',        addFn: () => Goals.openAdd() },
-    subscriptions: { title: 'Obunalar',         addFn: () => Subscriptions.openAdd() },
-    notes:         { title: 'Eslatmalar',       addFn: () => Notes.openAdd() },
-    more:          { title: "Ko'proq",           addFn: null },
+    dashboard:     { title: 'Tartibla',      addFn: null },
+    finance:       { title: 'Moliya',        addFn: () => Finance.openAdd('expense') },
+    books:         { title: 'Kitoblar',      addFn: () => Books.openAdd() },
+    habits:        { title: 'Odatlar',       addFn: () => Habits.openAdd() },
+    goals:         { title: 'Maqsadlar',     addFn: () => Goals.openAdd() },
+    subscriptions: { title: 'Obunalar',      addFn: () => Subscriptions.openAdd() },
+    notes:         { title: 'Eslatmalar',    addFn: () => Notes.openAdd() },
+    profile:       { title: 'Profil',        addFn: null },
+    more:          { title: "Ko'proq",       addFn: null },
   };
 
   let currentPage = 'dashboard';
@@ -56,7 +57,7 @@ const App = (() => {
     currentPage = page;
     document.querySelectorAll('.nav-item').forEach(el => {
       const pg = el.dataset.page;
-      const isActive = pg === page || (pg === 'more' && ['goals','subscriptions','notes'].includes(page));
+      const isActive = pg === page || (pg === 'more' && ['goals','subscriptions','notes','profile'].includes(page));
       el.classList.toggle('active', isActive);
     });
     renderPage(page);
@@ -82,6 +83,7 @@ const App = (() => {
       case 'goals':         html = Goals.render(); break;
       case 'subscriptions': html = Subscriptions.render(); break;
       case 'notes':         html = Notes.render(); break;
+      case 'profile':       html = Profile.render(); break;
       case 'more':          html = renderMore(); break;
       default:              html = renderDashboard();
     }
@@ -101,9 +103,11 @@ const App = (() => {
     const expense = monthTxs.filter(t => t.type === 'expense').reduce((s,t) => s + t.amount, 0);
     const balance = txs.reduce((s,t) => t.type === 'income' ? s + t.amount : s - t.amount, 0);
 
-    const habits   = DB.getHabits();
-    const todayLog = (DB.getHabitLogs())[todayStr()] || {};
-    const habitsDone = habits.filter(h => todayLog[h.id]).length;
+    const habits      = DB.getHabits();
+    const todayLog    = (DB.getHabitLogs())[todayStr()] || {};
+    const todayDayIdx = new Date().getDay();
+    const todayHabits = habits.filter(h => !h.schedule || h.schedule.type === 'daily' || (h.schedule.days||[]).includes(todayDayIdx));
+    const habitsDone  = todayHabits.filter(h => todayLog[h.id]).length;
 
     const books = DB.getBooks();
     const goals = DB.getGoals();
@@ -119,7 +123,7 @@ const App = (() => {
         const pct = g.target ? Math.min(100, Math.round((g.current || 0) / g.target * 100)) : 0;
         return `<div class="goal-card" onclick="App.go('goals')" style="cursor:pointer">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${g.type==='numeric'?'10px':'0'}">
-            <div style="font-weight:800;font-size:15px;letter-spacing:-.1px">${g.title}</div>
+            <div style="font-weight:800;font-size:15px;letter-spacing:-.1px">${escapeHtml(g.title)}</div>
             ${g.deadline ? `<span class="badge badge-orange" style="font-size:10px">${fmtDate(g.deadline)}</span>` : ''}
           </div>
           ${g.type === 'numeric' ? `
@@ -141,7 +145,7 @@ const App = (() => {
         return `<div class="list-item">
           <div class="list-item-icon" style="background:var(--orange-light)">📦</div>
           <div class="list-item-body">
-            <div class="list-item-title">${s.name}</div>
+            <div class="list-item-title">${escapeHtml(s.name)}</div>
             <div class="list-item-sub">${fmtDate(s.nextDate)}</div>
           </div>
           <div class="list-item-right">
@@ -176,7 +180,7 @@ const App = (() => {
       <div class="stat-grid">
         <div class="stat-card" onclick="App.go('habits')" style="cursor:pointer;border-top:3px solid var(--green)">
           <div class="stat-label">Bugungi odatlar</div>
-          <div class="stat-value" style="color:var(--green)">${habitsDone}<span style="font-size:16px;font-weight:600;color:var(--text3)">/${habits.length}</span></div>
+          <div class="stat-value" style="color:var(--green)">${habitsDone}<span style="font-size:16px;font-weight:600;color:var(--text3)">/${todayHabits.length}</span></div>
           <div class="stat-sub">bajarildi</div>
         </div>
         <div class="stat-card" onclick="App.go('books')" style="cursor:pointer;border-top:3px solid var(--orange)">
@@ -206,7 +210,25 @@ const App = (() => {
   }
 
   function renderMore() {
+    const user      = Auth.getUser();
+    const initials  = Profile.getInitials(user);
+    const name      = Profile.getUserDisplayName(user);
+    const email     = user?.email || '';
+    const hasName   = user?.user_metadata?.first_name || user?.user_metadata?.last_name;
+
     return `<div class="page-enter">
+
+      <!-- Profile shortcut -->
+      <button class="more-profile-card" onclick="App.go('profile')">
+        <div class="more-profile-avatar">${escapeHtml(initials)}</div>
+        <div style="flex:1;min-width:0;text-align:left">
+          <div style="font-size:15px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(name)}</div>
+          ${hasName ? `<div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:1px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(email)}</div>` : ''}
+          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;font-weight:500">Profilni ko'rish →</div>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+
       <div class="more-grid">
         <button class="more-card" onclick="App.go('goals')">
           <div class="more-card-icon">🎯</div>
@@ -223,11 +245,6 @@ const App = (() => {
           <div class="more-card-title">Eslatmalar</div>
           <div class="more-card-sub">${DB.getNotes().length} ta</div>
         </button>
-        <button class="more-card" onclick="Auth.logout()" style="border: 1px solid rgba(255,144,144,0.3); background: rgba(255,144,144,0.05);">
-          <div class="more-card-icon">🚪</div>
-          <div class="more-card-title" style="color: #FF9090;">Chiqish</div>
-          <div class="more-card-sub" style="color: rgba(255,144,144,0.7);">Profildan chiqish</div>
-        </button>
       </div>
     </div>`;
   }
@@ -237,10 +254,13 @@ const App = (() => {
   function updateDate() {
     const el = document.getElementById('headerDate');
     if (!el) return;
-    const now = new Date();
-    const days = ['Yak','Du','Se','Cho','Pa','Ju','Sha'];
+    const now    = new Date();
+    const days   = ['Yak','Du','Se','Cho','Pa','Ju','Sha'];
     const months = ['Yan','Fev','Mar','Apr','May','Iyn','Iyl','Avg','Sen','Okt','Noy','Dek'];
-    el.textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    el.innerHTML = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}<span style="opacity:.45;margin:0 3px">·</span>${h}:${m}<span style="opacity:.45">:${s}</span>`;
   }
 
   function init() {
@@ -248,6 +268,14 @@ const App = (() => {
       el.addEventListener('click', () => navigate(el.dataset.page));
     });
     updateDate();
+    setInterval(updateDate, 1000);
+    Habits.checkNotifications();
+    // Minutning boshiga sinxronlashtirish — har minutda aniq tekshiradi
+    const msToNextMin = (60 - new Date().getSeconds()) * 1000 + 500;
+    setTimeout(() => {
+      Habits.checkNotifications();
+      setInterval(Habits.checkNotifications, 60000);
+    }, msToNextMin);
     navigate('dashboard');
   }
 

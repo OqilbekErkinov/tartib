@@ -8,8 +8,8 @@ const Notes = (() => {
       ? `<div class="empty-state"><span class="empty-icon">📝</span><p>Hali eslatma yo'q</p></div>`
       : notes.map(n => `
           <div class="note-card" style="background:${n.color || '#fff'}" onclick="Notes.openEdit('${n.id}')">
-            ${n.title ? `<div class="note-title">${n.title}</div>` : ''}
-            ${n.body  ? `<div class="note-body">${n.body.slice(0, 150)}${n.body.length > 150 ? '…' : ''}</div>` : ''}
+            ${n.title ? `<div class="note-title">${escapeHtml(n.title)}</div>` : ''}
+            ${n.body  ? `<div class="note-body">${escapeHtml(n.body).slice(0, 150)}${n.body.length > 150 ? '…' : ''}</div>` : ''}
             <div class="note-date">${fmtDate(n.updatedAt)}</div>
           </div>`).join('');
 

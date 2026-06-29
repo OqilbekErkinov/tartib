@@ -1,22 +1,49 @@
 const Books = (() => {
   const COLORS = ['#F58F20','#467434','#363636','#3B82F6','#8B5CF6','#EC4899','#EF4444','#06B6D4','#64748B'];
   let activeTab = 'unread';
+  let sortOrder = 'desc'; // desc = yangi→eski, asc = eski→yangi
 
   function render() {
-    const books    = DB.getBooks();
-    const tabs     = { unread: 'Yangi', reading: "O'qilmoqda", read: "O'qilgan", lent: 'Berilgan' };
-    const filtered = books.filter(b => b.status === activeTab);
-    const msgs     = {
-      unread:  "Yangi kitob qo'shing", reading: "Hozir kitob o'qilmayapti",
-      read:    "Hali kitob o'qib bo'linmagan", lent: "Hech kimga kitob berilmagan",
+    const books = DB.getBooks();
+    const tabs  = { all: 'Jami', unread: 'Yangi', reading: "O'qilmoqda", read: "O'qilgan", lent: 'Berilgan' };
+
+    let filtered;
+    if (activeTab === 'all') {
+      filtered = [...books].sort((a, b) => {
+        const da = a.buyDate ? new Date(a.buyDate) : new Date(0);
+        const db = b.buyDate ? new Date(b.buyDate) : new Date(0);
+        return sortOrder === 'desc' ? db - da : da - db;
+      });
+    } else if (activeTab === 'lent') {
+      filtered = books.filter(b => b.lentTo || b.status === 'lent');
+    } else if (activeTab === 'read') {
+      // eski usul (status='lent') o'qilgan deb hisoblanadi
+      filtered = books.filter(b => b.status === 'read' || b.status === 'lent');
+    } else {
+      filtered = books.filter(b => b.status === activeTab);
+    }
+
+    const msgs = {
+      all:     "Hali birorta kitob qo'shilmagan",
+      unread:  "Yangi kitob qo'shing",
+      reading: "Hozir kitob o'qilmayapti",
+      read:    "Hali kitob o'qib bo'linmagan",
+      lent:    "Hech kimga kitob berilmagan",
     };
     const counts = {
       unread:  books.filter(b => b.status === 'unread').length,
       reading: books.filter(b => b.status === 'reading').length,
-      read:    books.filter(b => b.status === 'read').length,
-      lent:    books.filter(b => b.status === 'lent').length,
+      read:    books.filter(b => b.status === 'read' || b.status === 'lent').length,
+      lent:    books.filter(b => b.lentTo || b.status === 'lent').length,
     };
     const total = books.length;
+
+    const sortBar = activeTab === 'all' ? `
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
+        <span style="font-size:11px;font-weight:700;color:var(--text2);margin-right:2px">Saralash:</span>
+        <button onclick="Books.setSort('desc')" class="btn btn-sm" style="font-size:11px;padding:4px 11px;font-weight:700;${sortOrder==='desc'?'background:var(--orange);color:#fff;border-color:var(--orange)':'background:var(--surface2);color:var(--text2);border-color:var(--border)'}">↓ Yangi</button>
+        <button onclick="Books.setSort('asc')"  class="btn btn-sm" style="font-size:11px;padding:4px 11px;font-weight:700;${sortOrder==='asc' ?'background:var(--orange);color:#fff;border-color:var(--orange)':'background:var(--surface2);color:var(--text2);border-color:var(--border)'}">↑ Eski</button>
+      </div>` : '';
 
     const booksHtml = filtered.length === 0
       ? `<div class="empty-state"><span class="empty-icon">📚</span><p>${msgs[activeTab]}</p></div>`
@@ -53,19 +80,23 @@ const Books = (() => {
           </div>`).join('')}
       </div>
 
-      <div class="tabs">
+      <div class="tabs" style="overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch">
         ${Object.entries(tabs).map(([k, v]) =>
-          `<button class="tab-btn ${activeTab===k?'active':''}" onclick="Books.setTab('${k}')">${v}</button>`
+          `<button class="tab-btn ${activeTab===k?'active':''}" style="white-space:nowrap;flex-shrink:0" onclick="Books.setTab('${k}')">${v}</button>`
         ).join('')}
       </div>
 
+      ${sortBar}
       ${booksHtml}
     </div>`;
   }
 
   function bookCard(b) {
+    const isLent = !!(b.lentTo || b.status === 'lent');
     let statusActions = '';
-    if (b.status === 'unread') {
+    if (isLent) {
+      statusActions = `<button class="btn btn-sm btn-success" onclick="Books.returnBook('${b.id}')">↩ Qaytdi</button>`;
+    } else if (b.status === 'unread') {
       statusActions = `<button class="btn btn-sm" style="background:var(--orange-light);color:var(--orange-dark);font-weight:700;border:none;cursor:pointer;border-radius:6px;padding:7px 12px;font-size:12px" onclick="Books.move('${b.id}','reading')">▶ Boshlash</button>`;
     } else if (b.status === 'reading') {
       statusActions = `
@@ -73,13 +104,11 @@ const Books = (() => {
         <button class="btn btn-sm btn-ghost"   onclick="Books.openLend('${b.id}')">📤 Ber</button>`;
     } else if (b.status === 'read') {
       statusActions = `<button class="btn btn-sm btn-ghost" onclick="Books.openLend('${b.id}')">📤 Berish</button>`;
-    } else if (b.status === 'lent') {
-      statusActions = `<button class="btn btn-sm btn-success" onclick="Books.move('${b.id}','read')">↩ Qaytdi</button>`;
     }
 
-    const lentInfo = b.status === 'lent' && b.lentTo
+    const lentInfo = b.lentTo
       ? `<div style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--orange-dark);font-weight:700;background:var(--orange-light);padding:3px 9px;border-radius:20px;margin-top:6px">
-           📤 ${b.lentTo} · ${fmtDate(b.lentDate)}
+           📤 ${escapeHtml(b.lentTo)} · ${fmtDate(b.lentDate)}
          </div>` : '';
 
     const metaParts = [
@@ -91,8 +120,8 @@ const Books = (() => {
       <div class="book-spine" style="background:${b.color || '#F58F20'}"></div>
       <div class="book-content">
         <div class="book-info">
-          <div class="book-title">${b.title}</div>
-          ${b.author ? `<div class="book-author">${b.author}</div>` : ''}
+          <div class="book-title">${escapeHtml(b.title)}</div>
+          ${b.author ? `<div class="book-author">${escapeHtml(b.author)}</div>` : ''}
           ${metaParts.length ? `<div class="book-meta">${metaParts.map(p=>`<span>${p}</span>`).join('')}</div>` : ''}
           ${lentInfo}
           <div class="book-actions">${statusActions}</div>
@@ -148,6 +177,7 @@ const Books = (() => {
   }
 
   function setTab(tab) { activeTab = tab; App.renderPage('books'); }
+  function setSort(order) { sortOrder = order; App.renderPage('books'); }
 
   function openAdd() {
     openModal("Kitob qo'shish",
@@ -224,9 +254,21 @@ const Books = (() => {
     if (!to) { App.Toast('Ismni kiriting'); return; }
     const books = DB.getBooks();
     const b = books.find(x => x.id === id);
-    if (b) { b.status = 'lent'; b.lentTo = to; b.lentDate = document.getElementById('lend_date').value || todayStr(); }
+    if (b) { b.lentTo = to; b.lentDate = document.getElementById('lend_date').value || todayStr(); }
     DB.saveBooks(books);
     closeModal();
+    App.renderPage('books');
+  }
+
+  function returnBook(id) {
+    const books = DB.getBooks();
+    const b = books.find(x => x.id === id);
+    if (b) {
+      if (b.status === 'lent') b.status = 'read'; // eski ma'lumotlarni migratsiya qilish
+      b.lentTo   = null;
+      b.lentDate = null;
+    }
+    DB.saveBooks(books);
     App.renderPage('books');
   }
 
@@ -237,5 +279,5 @@ const Books = (() => {
     });
   }
 
-  return { render, setTab, openAdd, openEdit, selectColor, save, move, openLend, lend, del };
+  return { render, setTab, setSort, openAdd, openEdit, selectColor, save, move, openLend, lend, returnBook, del };
 })();

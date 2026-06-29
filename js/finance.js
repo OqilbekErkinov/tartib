@@ -14,6 +14,7 @@ const Finance = (() => {
   };
 
   let debtTab = 'borrowed';
+  let txLimit = 40;
 
   // ── MAIN RENDER ──────────────────────────────────────────────
   function render() {
@@ -31,7 +32,8 @@ const Finance = (() => {
     const totalOwed    = debts.filter(d => d.type === 'borrowed' && !d.paid).reduce((s,d) => s + d.amount, 0);
     const totalLentOut = debts.filter(d => d.type === 'lent'     && !d.paid).reduce((s,d) => s + d.amount, 0);
 
-    const recent = [...txs].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 40);
+    const allSorted = [...txs].sort((a,b) => new Date(b.date) - new Date(a.date));
+    const recent = allSorted.slice(0, txLimit);
 
     const catMap = {};
     monthTxs.filter(t => t.type === 'expense').forEach(t => {
@@ -67,7 +69,7 @@ const Finance = (() => {
           return `<div class="list-item" style="border-left:3px solid ${bc}">
             <div class="list-item-icon" style="background:${c.color}18">${c.icon}</div>
             <div class="list-item-body">
-              <div class="list-item-title">${t.note || c.label}</div>
+              <div class="list-item-title">${escapeHtml(t.note) || c.label}</div>
               <div class="list-item-sub">${c.label} · ${fmtDate(t.date)}</div>
             </div>
             <div class="list-item-right">
@@ -80,6 +82,10 @@ const Finance = (() => {
           </div>`;
         }).join('')
       : `<div class="empty-state"><span class="empty-icon">💳</span><p>Hali operatsiya yo'q</p></div>`;
+
+    const showMoreBtn = allSorted.length > txLimit
+      ? `<button class="btn btn-ghost btn-full" style="margin-bottom:10px" onclick="Finance.showMoreTx()">Ko'proq ko'rish (${allSorted.length - txLimit} ta qoldi)</button>`
+      : '';
 
     return `<div class="page-enter">
       <div class="hero-card hero-orange">
@@ -114,6 +120,7 @@ const Finance = (() => {
 
       ${catHtml}
       ${txHtml}
+      ${showMoreBtn}
 
       <div id="debtsSection" style="margin-top:6px">${renderDebts()}</div>
     </div>`;
@@ -134,10 +141,10 @@ const Finance = (() => {
       return `<div class="list-item" style="border-left:3px solid ${color};${d.paid ? 'opacity:.5' : ''}">
         <div class="list-item-icon" style="background:${isBorrowed ? '#FEF0ED' : 'var(--green-light)'};font-size:20px">${icon}</div>
         <div class="list-item-body">
-          <div class="list-item-title">${d.person}</div>
+          <div class="list-item-title">${escapeHtml(d.person)}</div>
           <div class="list-item-sub">
             ${fmtDate(d.date)}${d.dueDate ? ` · Muddat: ${fmtDate(d.dueDate)}` : ''}
-            ${d.note ? ` · ${d.note}` : ''}
+            ${d.note ? ` · ${escapeHtml(d.note)}` : ''}
           </div>
         </div>
         <div class="list-item-right">
@@ -385,8 +392,13 @@ const Finance = (() => {
     });
   }
 
+  function showMoreTx() {
+    txLimit += 40;
+    App.renderPage('finance');
+  }
+
   return {
-    render, setDebtTab, scrollToDebts,
+    render, setDebtTab, scrollToDebts, showMoreTx,
     openAdd, openEditTx, saveTx, updateTx, delTx,
     openAddDebt, openEditDebt, saveDebt, updateDebt, payDebt, delDebt,
   };

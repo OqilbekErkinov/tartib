@@ -40,8 +40,8 @@ const Goals = (() => {
     return `<div class="goal-card ${g.done ? 'done' : ''}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:${g.type==='numeric'?'12px':'6px'}">
         <div style="flex:1">
-          <div style="font-weight:800;font-size:16px;letter-spacing:-.2px">${g.title}</div>
-          ${g.desc ? `<div style="font-size:12px;color:var(--text2);margin-top:3px;font-weight:500">${g.desc}</div>` : ''}
+          <div style="font-weight:800;font-size:16px;letter-spacing:-.2px">${escapeHtml(g.title)}</div>
+          ${g.desc ? `<div style="font-size:12px;color:var(--text2);margin-top:3px;font-weight:500">${escapeHtml(g.desc)}</div>` : ''}
         </div>
         <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
           ${deadline}

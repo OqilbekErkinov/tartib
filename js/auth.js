@@ -20,11 +20,14 @@ const Auth = (() => {
     }
 
     sb.auth.onAuthStateChange(async (event, session) => {
-      // Agar parol tiklash jarayonida bo'lsak, avtomat kirib ketishni to'xtatamiz
       if (event === 'PASSWORD_RECOVERY' || (session && currentFlow === 'new_password')) {
         return;
       }
-
+      // Foydalanuvchi metadata yangilanganda (ism/familiya) ilovani qayta yuklamaymiz
+      if (event === 'USER_UPDATED' && session) {
+        currentUser = session.user;
+        return;
+      }
       if (session) {
         currentUser = session.user;
         await DB.initCloud();
@@ -47,9 +50,7 @@ const Auth = (() => {
     if (typeof App !== 'undefined' && typeof App.init === 'function' && !window.appInitialized) {
         App.init();
         window.appInitialized = true;
-    }
-    // Agar dastur allaqachon ishlab turgan bo'lsa va qayta kirilsa, dashboard ni render qilamiz
-    if (window.appInitialized) {
+    } else if (window.appInitialized) {
         App.renderPage('dashboard');
     }
   }
@@ -156,7 +157,7 @@ const Auth = (() => {
         <p class="auth-sub"><b>${tempEmail}</b> manziliga yuborilgan 6 xonali kodni kiriting</p>
         
         <div class="otp-inputs" style="display:flex; gap:8px; justify-content:center; margin-bottom:15px">
-          ${[1,2,3,4,5,6].map(i => `<input type="text" class="auth-input" style="width:45px;text-align:center;font-size:22px;padding:10px 0" maxlength="1" id="otp${i}" onkeyup="Auth.moveOtpFocus(this, ${i})">`).join('')}
+          ${[1,2,3,4,5,6].map(i => `<input type="text" class="auth-input" style="width:45px;text-align:center;font-size:22px;padding:10px 0" maxlength="1" id="otp${i}" onkeyup="Auth.moveOtpFocus(this, ${i}, event)">`).join('')}
         </div>
         
         <div id="authError" class="auth-error"></div>
@@ -194,11 +195,11 @@ const Auth = (() => {
     }, 100);
   }
 
-  function moveOtpFocus(el, idx) {
+  function moveOtpFocus(el, idx, event) {
     if (el.value.length === 1 && idx < 6) {
       document.getElementById('otp' + (idx + 1)).focus();
     }
-    if (el.value.length === 0 && idx > 1) {
+    if (event && event.key === 'Backspace' && el.value.length === 0 && idx > 1) {
       document.getElementById('otp' + (idx - 1)).focus();
     }
   }
@@ -323,7 +324,15 @@ const Auth = (() => {
     await sb.auth.signOut();
   }
 
-  return { init, togglePassword, setFlow, moveOtpFocus, login, signup, recoverPassword, verifyOtp, setNewPassword, logout };
+  function getUser() { return currentUser; }
+
+  async function refreshUser() {
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) currentUser = user;
+    return user;
+  }
+
+  return { init, getUser, refreshUser, togglePassword, setFlow, moveOtpFocus, login, signup, recoverPassword, verifyOtp, setNewPassword, logout };
 })();
 
 // Start Auth
