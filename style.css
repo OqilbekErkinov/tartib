@@ -1360,6 +1360,30 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Theme header button — CSS-only icon swap */
+.header-right-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.header-theme-btn {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text2);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .15s, color .15s;
+}
+.header-theme-btn:active { background: var(--border); }
+
+.theme-icon-sun { display: none; }
+[data-theme="dark"] .theme-icon-moon { display: none; }
+[data-theme="dark"] .theme-icon-sun  { display: block; }
+
 /* Auth back button */
 .auth-back {
   position: absolute;

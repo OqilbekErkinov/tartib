@@ -247,29 +247,6 @@ const App = (() => {
         </button>
       </div>
 
-      <div style="background:var(--surface);border-radius:var(--radius-sm);padding:0 16px;box-shadow:var(--shadow-sm);border:1px solid var(--border-light);margin-bottom:6px">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border-light)">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:18px">${document.documentElement.getAttribute('data-theme')==='dark'?'☀️':'🌙'}</span>
-            <div>
-              <div style="font-size:14px;font-weight:700;color:var(--text)">${document.documentElement.getAttribute('data-theme')==='dark'?'Kungi rejim':'Tungi rejim'}</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:1px">${document.documentElement.getAttribute('data-theme')==='dark'?'Hozir: Qorong\'i':'Hozir: Yorug\''}</div>
-            </div>
-          </div>
-          <button onclick="App.toggleTheme()" style="width:48px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;transition:background .2s;-webkit-tap-highlight-color:transparent;background:${document.documentElement.getAttribute('data-theme')==='dark'?'var(--orange)':'var(--border)'}">
-            <span style="position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.2);left:${document.documentElement.getAttribute('data-theme')==='dark'?'25px':'3px'}"></span>
-          </button>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:18px">🔔</span>
-            <div>
-              <div style="font-size:14px;font-weight:700;color:var(--text)">Bildirishnomalar</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:1px">${typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'Yoqilgan ✓' : 'O\'chirilgan'}</div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>`;
   }
 
@@ -281,7 +258,7 @@ const App = (() => {
     const isDark = html.getAttribute('data-theme') === 'dark';
     html.setAttribute('data-theme', isDark ? 'light' : 'dark');
     localStorage.setItem('tartib_theme', isDark ? 'light' : 'dark');
-    renderPage(currentPage || 'more');
+    // CSS [data-theme="dark"] qoidalari orqali ikonka o'z-o'zidan yangilanadi
   }
 
   function applyTheme() {
@@ -379,11 +356,12 @@ const App = (() => {
     Habits.checkNotifications();
     Finance.checkRecurring();
     checkStartupAlerts();
-    const msToNextMin = (60 - new Date().getSeconds()) * 1000 + 500;
-    setTimeout(() => {
-      Habits.checkNotifications();
-      setInterval(Habits.checkNotifications, 60000);
-    }, msToNextMin);
+    // Har 30 soniyada tekshir — drift va o'tkazib yuborishni kamaytirish uchun
+    setInterval(Habits.checkNotifications, 30000);
+    // Telefon blokdan chiqqanda yoki tabga qaytganda darhol tekshir
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') Habits.checkNotifications();
+    });
     navigate('dashboard');
   }
 

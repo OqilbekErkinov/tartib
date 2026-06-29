@@ -123,32 +123,44 @@ const Habits = (() => {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     const habits   = DB.getHabits();
     const now      = new Date();
-    const timeStr  = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const nowMins  = now.getHours() * 60 + now.getMinutes();
     const todayDay = now.getDay();
     const todayKey = todayStr();
     const todayLog = getTodayLog();
     const nKey     = `tartib_notif_${todayKey}`;
     const notified = JSON.parse(localStorage.getItem(nKey) || '[]');
+    let changed    = false;
 
     habits.forEach(h => {
-      if (!h.schedule?.notify)          return;
+      if (!h.schedule?.notify)             return;
       if (!isScheduledForDay(h, todayDay)) return;
-      if (todayLog[h.id])               return; // already done
-      if (notified.includes(h.id))      return; // already notified today
+      if (todayLog[h.id])                  return;
+      if (notified.includes(h.id))         return;
+
       const nt = h.schedule.notifyTime || h.schedule.time;
-      if (!nt || nt !== timeStr)        return;
+      if (!nt) return;
+
+      const [hh, mm] = nt.split(':').map(Number);
+      const ntMins   = hh * 60 + mm;
+      // 0–3 daqiqalik oyna: drift va telefon bloki uchun
+      const diff = nowMins - ntMins;
+      if (diff < 0 || diff > 3) return;
 
       try {
-        new Notification('Tartibla — Odat vaqti!', {
-          body: `${h.icon} ${h.name}`,
-          icon: './favicon.svg',
+        new Notification('Tartibla 🔔', {
+          body: `${h.icon} ${h.name} — vaqti keldi!`,
+          // SVG icon Android da ishlamaydi — icon bermayamiz
           tag:  `habit-${h.id}-${todayKey}`,
+          requireInteraction: false,
         });
-      } catch(e) {}
-
-      notified.push(h.id);
-      localStorage.setItem(nKey, JSON.stringify(notified));
+        notified.push(h.id);
+        changed = true;
+      } catch(e) {
+        console.warn('Notification error:', e);
+      }
     });
+
+    if (changed) localStorage.setItem(nKey, JSON.stringify(notified));
   }
 
   // ── FEATURE 6: STATS ──────────────────────────────────────────
@@ -595,24 +607,6 @@ const Habits = (() => {
     App.renderPage('habits');
   }
 
-  async function testNotification() {
-    const granted = await requestNotificationPermission();
-    if (!granted) {
-      App.Toast("Ruxsat yo'q — brauzer sozlamalaridan Notification ruxsatini bering.", 'error');
-      return;
-    }
-    try {
-      new Notification('Tartibla — Test! ✅', {
-        body: 'Bildirishnoma ishlayapti!',
-        icon: './favicon.svg',
-        tag: 'tartib-test',
-      });
-      App.Toast("Test xabari yuborildi — bildrishnomalarni tekshiring!", 'success');
-    } catch(e) {
-      App.Toast("Xatolik: " + (e.message || 'file:// da ishlamaydi'), 'error');
-    }
-  }
-
   function del(id) {
     App.Confirm("O'chirishni tasdiqlaysizmi?", () => {
       DB.saveHabits(DB.getHabits().filter(h => h.id !== id));
@@ -730,7 +724,7 @@ const Habits = (() => {
     render, toggle, openDoneModal, confirmDone, moveHabit,
     setScheduleType, toggleDay, toggleNotifyUI,
     openAdd, openEdit, selectIcon, save,
-    openNote, saveNote, testNotification,
+    openNote, saveNote,
     openStats, protect,
     del, checkNotifications,
   };
