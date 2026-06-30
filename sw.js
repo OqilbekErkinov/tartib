@@ -1,4 +1,4 @@
-const CACHE = 'tartibla-v2';
+const CACHE = 'tartibla-v3';
 
 const APP_SHELL = [
   './',
@@ -14,6 +14,9 @@ const APP_SHELL = [
   './js/subscriptions.js',
   './js/notes.js',
   './js/profile.js',
+  './js/feedback.js',
+  './js/onboarding.js',
+  './js/timer.js',
   './js/app.js',
   './js/auth.js',
 ];

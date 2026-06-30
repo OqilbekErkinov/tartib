@@ -2,8 +2,9 @@
   "name": "Tartibla",
   "short_name": "Tartibla",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#F5F2ED",
+  "background_color": "#F58F20",
   "theme_color": "#F58F20",
   "icons": [
     {

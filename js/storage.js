@@ -56,6 +56,8 @@ const DB = {
     } catch(e) { console.error("Cloud sync error:", e); }
   },
 
+  hasCloud() { return cloudData !== null; },
+
   get(key, def) {
     if (cloudData && cloudData[key] !== undefined) return cloudData[key];
     try { const v = localStorage.getItem('cp_'+key); return v ? JSON.parse(v) : def; } catch { return def; }

@@ -180,8 +180,8 @@ const Finance = (() => {
       <div class="section-head">
         <h2>Qarzlar</h2>
         <div style="display:flex;gap:6px">
-          <button onclick="Finance.openAddDebt('borrowed')" style="background:#FEF0ED;color:#D94040;font-weight:700;border:none;cursor:pointer;border-radius:6px;padding:6px 12px;font-size:12px">📥 Oldim</button>
-          <button onclick="Finance.openAddDebt('lent')"     style="background:var(--green-light);color:var(--green);font-weight:700;border:none;cursor:pointer;border-radius:6px;padding:6px 12px;font-size:12px">📤 Berdim</button>
+          <button id="obDebtOldim" onclick="Finance.openAddDebt('borrowed')" style="background:#FEF0ED;color:#D94040;font-weight:700;border:none;cursor:pointer;border-radius:6px;padding:6px 12px;font-size:12px">📥 Oldim</button>
+          <button id="obDebtBerdim" onclick="Finance.openAddDebt('lent')"     style="background:var(--green-light);color:var(--green);font-weight:700;border:none;cursor:pointer;border-radius:6px;padding:6px 12px;font-size:12px">📤 Berdim</button>
         </div>
       </div>
       <div class="tabs" style="margin-bottom:12px">

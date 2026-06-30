@@ -50,6 +50,7 @@ const App = (() => {
     profile:       { title: 'Profil',        addFn: null },
     more:          { title: "Ko'proq",       addFn: null },
     timer:         { title: 'Timer',         addFn: null },
+    feedback:      { title: 'Fikr va takliflar', addFn: null },
   };
 
   let currentPage = 'dashboard';
@@ -58,13 +59,13 @@ const App = (() => {
     currentPage = page;
     document.querySelectorAll('.nav-item').forEach(el => {
       const pg = el.dataset.page;
-      const isActive = pg === page || (pg === 'more' && ['goals','subscriptions','notes','profile'].includes(page));
+      const isActive = pg === page || (pg === 'more' && ['goals','subscriptions','notes','profile','timer','feedback'].includes(page));
       el.classList.toggle('active', isActive);
     });
     renderPage(page);
   }
 
-  function renderPage(page) {
+  async function renderPage(page) {
     const cfg = PAGE_CONFIG[page] || PAGE_CONFIG.dashboard;
     document.getElementById('pageTitle').textContent = cfg.title;
     const actionBtn = document.getElementById('headerAction');
@@ -87,11 +88,13 @@ const App = (() => {
       case 'profile':       html = Profile.render(); break;
       case 'more':          html = renderMore(); break;
       case 'timer':         html = Timer.render(); break;
+      case 'feedback':      html = await Feedback.render(); break;
       default:              html = renderDashboard();
     }
 
     document.getElementById('mainContent').innerHTML = html;
     document.getElementById('mainContent').scrollTop = 0;
+    if (typeof Onboarding !== 'undefined') Onboarding.showForPage(page);
   }
 
   function renderDashboard() {
@@ -198,12 +201,25 @@ const App = (() => {
       <div class="section-head"><h2>Qo'shimcha</h2></div>
       <div class="more-grid">
         <button class="more-card" onclick="App.go('notes')">
-          <div class="more-card-icon">📝</div>
+          <div class="more-card-icon-svg" style="background:rgba(168,85,247,.1);color:#A855F7">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
           <div class="more-card-title">Eslatmalar</div>
-          <div class="more-card-sub">${notes.length} ta eslatma</div>
+          <div class="more-card-sub">${notes.length} ta</div>
         </button>
         <button class="more-card" onclick="App.go('subscriptions')">
-          <div class="more-card-icon">📦</div>
+          <div class="more-card-icon-svg" style="background:rgba(6,182,212,.1);color:#06B6D4">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <rect x="2" y="5" width="20" height="14" rx="2.5"/>
+              <line x1="2" y1="10" x2="22" y2="10"/>
+              <line x1="6" y1="15" x2="10" y2="15"/>
+            </svg>
+          </div>
           <div class="more-card-title">Obunalar</div>
           <div class="more-card-sub">${subs.filter(s => !s.paused).length} ta faol</div>
         </button>
@@ -212,16 +228,69 @@ const App = (() => {
   }
 
   function renderMore() {
-    const user      = Auth.getUser();
-    const initials  = Profile.getInitials(user);
-    const name      = Profile.getUserDisplayName(user);
-    const email     = user?.email || '';
-    const hasName   = user?.user_metadata?.first_name || user?.user_metadata?.last_name;
+    const user     = Auth.getUser();
+    const initials = Profile.getInitials(user);
+    const name     = Profile.getUserDisplayName(user);
+    const email    = user?.email || '';
+    const hasName  = user?.user_metadata?.first_name || user?.user_metadata?.last_name;
+
+    const CARDS = [
+      {
+        page: 'goals',
+        title: 'Maqsadlar',
+        sub: `${DB.getGoals().filter(g => !g.done).length} ta faol`,
+        color: '#F58F20',
+        bg: 'rgba(245,143,32,.1)',
+        icon: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="6"/>
+          <circle cx="12" cy="12" r="2" fill="currentColor"/>
+        </svg>`,
+      },
+      {
+        page: 'subscriptions',
+        title: 'Obunalar',
+        sub: `${DB.getSubs().filter(s => !s.paused).length} ta faol`,
+        color: '#06B6D4',
+        bg: 'rgba(6,182,212,.1)',
+        icon: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <rect x="2" y="5" width="20" height="14" rx="2.5"/>
+          <line x1="2" y1="10" x2="22" y2="10"/>
+          <line x1="6" y1="15" x2="10" y2="15"/>
+        </svg>`,
+      },
+      {
+        page: 'notes',
+        title: 'Eslatmalar',
+        sub: `${DB.getNotes().length} ta`,
+        color: '#A855F7',
+        bg: 'rgba(168,85,247,.1)',
+        icon: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>`,
+      },
+      {
+        page: 'timer',
+        id: 'obTimerCard',
+        title: 'Timer',
+        sub: 'Fokus & soat',
+        color: '#467434',
+        bg: 'rgba(70,116,52,.1)',
+        icon: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="12" cy="13" r="8"/>
+          <polyline points="12 9 12 13 14.5 15"/>
+          <line x1="9" y1="2" x2="15" y2="2"/>
+        </svg>`,
+      },
+    ];
 
     return `<div class="page-enter">
 
       <!-- Profile shortcut -->
-      <button class="more-profile-card" onclick="App.go('profile')">
+      <button class="more-profile-card" id="obMoreProfile" onclick="App.go('profile')">
         <div class="more-profile-avatar">${escapeHtml(initials)}</div>
         <div style="flex:1;min-width:0;text-align:left">
           <div style="font-size:15px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(name)}</div>
@@ -231,28 +300,31 @@ const App = (() => {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
 
+      <!-- Feature grid -->
       <div class="more-grid">
-        <button class="more-card" onclick="App.go('goals')">
-          <div class="more-card-icon">🎯</div>
-          <div class="more-card-title">Maqsadlar</div>
-          <div class="more-card-sub">${DB.getGoals().filter(g => !g.done).length} ta faol</div>
-        </button>
-        <button class="more-card" onclick="App.go('subscriptions')">
-          <div class="more-card-icon">📦</div>
-          <div class="more-card-title">Obunalar</div>
-          <div class="more-card-sub">${DB.getSubs().filter(s => !s.paused).length} ta faol</div>
-        </button>
-        <button class="more-card" onclick="App.go('notes')">
-          <div class="more-card-icon">📝</div>
-          <div class="more-card-title">Eslatmalar</div>
-          <div class="more-card-sub">${DB.getNotes().length} ta</div>
-        </button>
-        <button class="more-card" onclick="App.go('timer')">
-          <div class="more-card-icon">⏱️</div>
-          <div class="more-card-title">Timer</div>
-          <div class="more-card-sub">Fokus & soat</div>
-        </button>
+        ${CARDS.map(c => `
+          <button class="more-card" ${c.id ? `id="${c.id}"` : ''} onclick="App.go('${c.page}')">
+            <div class="more-card-icon-svg" style="background:${c.bg};color:${c.color}">
+              ${c.icon}
+            </div>
+            <div class="more-card-title">${c.title}</div>
+            <div class="more-card-sub">${c.sub}</div>
+          </button>`).join('')}
       </div>
+
+      <!-- Feedback wide card -->
+      <button class="more-feedback-card" id="obFeedbackCard" onclick="App.go('feedback')">
+        <div class="more-feedback-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </div>
+        <div class="more-feedback-body">
+          <div class="more-feedback-title">Muammo yoki taklif bormi?</div>
+          <div class="more-feedback-sub">Bizga yozing — tez orada javob beramiz</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(245,143,32,.6)" stroke-width="2.5" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
 
     </div>`;
   }
@@ -372,11 +444,14 @@ const App = (() => {
     }
 
     // Internet qaytsa — kutilgan sinxronlashni amalga oshirish
-    window.addEventListener('online', () => {
-      if (localStorage.getItem('tartib_pending_sync')) {
-        DB.syncCloud();
-        Toast('Internet qaytdi — ma\'lumotlar sinxronlanmoqda...', 'success');
+    window.addEventListener('online', async () => {
+      if (!localStorage.getItem('tartib_pending_sync')) return;
+      Toast('Internet qaytdi — sinxronlanmoqda...', 'success');
+      // cloudData null bo'lsa (offline login) — avval qayta yuklab olish
+      if (!DB.hasCloud()) {
+        await DB.initCloud();
       }
+      DB.syncCloud();
     });
     window.addEventListener('offline', () => {
       Toast('Internet yo\'q — o\'zgarishlar localda saqlanadi', 'error');

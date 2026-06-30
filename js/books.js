@@ -95,15 +95,15 @@ const Books = (() => {
     const isLent = !!(b.lentTo || b.status === 'lent');
     let statusActions = '';
     if (isLent) {
-      statusActions = `<button class="btn btn-sm btn-success" onclick="Books.returnBook('${b.id}')">↩ Qaytdi</button>`;
+      statusActions = `<button class="btn btn-sm btn-success ob-qaytdi-btn" onclick="Books.returnBook('${b.id}')">↩ Qaytdi</button>`;
     } else if (b.status === 'unread') {
-      statusActions = `<button class="btn btn-sm" style="background:var(--orange-light);color:var(--orange-dark);font-weight:700;border:none;cursor:pointer;border-radius:6px;padding:7px 12px;font-size:12px" onclick="Books.move('${b.id}','reading')">▶ Boshlash</button>`;
-    } else if (b.status === 'reading') {
       statusActions = `
-        <button class="btn btn-sm btn-success" onclick="Books.move('${b.id}','read')">✓ Tugatdim</button>
-        <button class="btn btn-sm btn-ghost"   onclick="Books.openLend('${b.id}')">📤 Ber</button>`;
+        <button class="btn btn-sm" style="background:var(--orange-light);color:var(--orange-dark);font-weight:700;border:none;cursor:pointer;border-radius:6px;padding:7px 12px;font-size:12px" onclick="Books.move('${b.id}','reading')">▶ Boshlash</button>
+        <button class="btn btn-sm btn-ghost ob-lend-btn" onclick="Books.openLend('${b.id}')">📤 Berish</button>`;
+    } else if (b.status === 'reading') {
+      statusActions = `<button class="btn btn-sm btn-success" onclick="Books.move('${b.id}','read')">✓ O'qidim</button>`;
     } else if (b.status === 'read') {
-      statusActions = `<button class="btn btn-sm btn-ghost" onclick="Books.openLend('${b.id}')">📤 Berish</button>`;
+      statusActions = `<button class="btn btn-sm btn-ghost ob-lend-btn" onclick="Books.openLend('${b.id}')">📤 Berish</button>`;
     }
 
     const lentInfo = b.lentTo

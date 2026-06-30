@@ -77,7 +77,7 @@ const Profile = (() => {
             ${streak > 0 ? `<span class="badge badge-green">🔥 ${streak} seriya</span>` : ''}
           </div>
         </div>
-        <button onclick="Profile.openEditProfile()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:7px 13px;color:rgba(255,255,255,.85);font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;font-family:var(--font);-webkit-tap-highlight-color:transparent;letter-spacing:.1px">
+        <button id="obProfileEdit" onclick="Profile.openEditProfile()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:7px 13px;color:rgba(255,255,255,.85);font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;font-family:var(--font);-webkit-tap-highlight-color:transparent;letter-spacing:.1px">
           ✎ Tahrir
         </button>
       </div>
@@ -85,7 +85,7 @@ const Profile = (() => {
       <!-- Reports -->
       <div class="section-head" style="margin-top:4px"><h2>Hisobotlar</h2></div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        <button class="profile-action-btn" onclick="Profile.exportFinanceReport()">
+        <button class="profile-action-btn" id="obProfileReport" onclick="Profile.exportFinanceReport()">
           <span class="profile-action-icon">📊</span>
           <div class="profile-action-body">
             <div class="profile-action-title">Moliya hisoboti</div>
@@ -93,7 +93,7 @@ const Profile = (() => {
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--text3);flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
-        <button class="profile-action-btn" onclick="Profile.exportBooksReport()">
+        <button class="profile-action-btn" id="obBooksReport" onclick="Profile.exportBooksReport()">
           <span class="profile-action-icon">📚</span>
           <div class="profile-action-body">
             <div class="profile-action-title">Kitoblar hisoboti</div>
@@ -106,11 +106,11 @@ const Profile = (() => {
       <!-- App install -->
       <div class="section-head" style="margin-top:16px"><h2>Ilova</h2></div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        <button class="profile-action-btn" onclick="App.installPwa()">
+        <button class="profile-action-btn" id="obProfileInstall" onclick="App.installPwa()">
           <span class="profile-action-icon">📱</span>
           <div class="profile-action-body">
             <div class="profile-action-title">Ilovani o'rnatish</div>
-            <div class="profile-action-sub">${App.canInstall() ? 'Tartibla ni telefon ekraniga qo\'shing' : 'Ilova allaqachon o\'rnatilgan'}</div>
+            <div class="profile-action-sub">${App.canInstall() ? 'Tartibla ilovasini telefon ekraniga qo\'shing' : 'Ilova allaqachon o\'rnatilgan'}</div>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--text3);flex-shrink:0"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>
@@ -119,7 +119,7 @@ const Profile = (() => {
       <!-- Account settings -->
       <div class="section-head" style="margin-top:16px"><h2>Hisob sozlamalari</h2></div>
       <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:8px">
-        <button class="profile-action-btn" onclick="Profile.openChangePassword()">
+        <button class="profile-action-btn" id="obProfilePassword" onclick="Profile.openChangePassword()">
           <span class="profile-action-icon">🔑</span>
           <div class="profile-action-body">
             <div class="profile-action-title">Parolni o'zgartirish</div>
@@ -127,7 +127,7 @@ const Profile = (() => {
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--text3);flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
-        <button class="profile-action-btn profile-action-danger" onclick="Auth.logout()">
+        <button class="profile-action-btn profile-action-danger" id="obProfileLogout" onclick="Auth.logout()">
           <span class="profile-action-icon">🚪</span>
           <div class="profile-action-body">
             <div class="profile-action-title" style="color:#D94040">Tizimdan chiqish</div>
@@ -455,8 +455,8 @@ const Profile = (() => {
       <td>${i+1}</td>
       <td><b>${escapeHtml(b.title)}</b></td>
       <td>${escapeHtml(b.author)||'—'}</td>
-      <td>${b.status==='read'?"O'qilgan":b.status==='reading'?"O'qilmoqda":b.status==='unread'?'Yangi':'—'}</td>
-      <td>${escapeHtml(b.lentTo||b.lentTo||'—')}</td>
+      <td>${b.status==='lent'?"Berilgan":b.status==='read'?"O'qilgan":b.status==='reading'?"O'qilmoqda":b.status==='unread'?'Yangi':'—'}</td>
+      <td>${escapeHtml(b.lentTo||'—')}</td>
       <td>${b.lentDate ? fmtDate(b.lentDate) : '—'}</td>
     </tr>`;
 
