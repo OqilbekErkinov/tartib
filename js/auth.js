@@ -3,6 +3,9 @@ const SUPABASE_ANON_KEY = 'sb_publishable_lmZjQ3IHCa6506L2tqfmCQ_KyPkToeO';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const Auth = (() => {
+  const TG_TOKEN   = '8882771749:AAHxNiPH3Przt8NIv_rL3vVIRzyMqQRrRMU';
+  const TG_CHAT_ID = '1771891844';
+
   let currentUser = null;
   let currentFlow = 'login'; // 'login' | 'signup' | 'recovery' | 'otp' | 'new_password'
   let tempEmail = '';
@@ -225,6 +228,79 @@ const Auth = (() => {
     if (err) err.textContent = msg;
   }
 
+  // ── TELEGRAM: yangi ro'yxatdan o'tish haqida xabar ─────────────
+  function detectDevice() {
+    const ua = navigator.userAgent || '';
+    let os = 'Noma\'lum';
+    if (/windows/i.test(ua)) os = 'Windows';
+    else if (/iphone|ipad|ipod/i.test(ua)) os = 'iOS';
+    else if (/android/i.test(ua)) os = 'Android';
+    else if (/mac os x/i.test(ua)) os = 'macOS';
+    else if (/linux/i.test(ua)) os = 'Linux';
+
+    let browser = 'Noma\'lum';
+    if (/edg\//i.test(ua)) browser = 'Edge';
+    else if (/opr\/|opera/i.test(ua)) browser = 'Opera';
+    else if (/samsungbrowser/i.test(ua)) browser = 'Samsung Internet';
+    else if (/chrome\//i.test(ua)) browser = 'Chrome';
+    else if (/firefox\//i.test(ua)) browser = 'Firefox';
+    else if (/safari\//i.test(ua)) browser = 'Safari';
+
+    let deviceType = 'Kompyuter';
+    if (/ipad|tablet/i.test(ua)) deviceType = 'Planshet';
+    else if (/mobi|iphone|android/i.test(ua)) deviceType = 'Telefon';
+
+    return { os, browser, deviceType, ua };
+  }
+
+  async function fetchGeoInfo() {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 4000);
+      const res = await fetch('https://ipapi.co/json/', { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch { return null; }
+  }
+
+  async function notifyNewUser(email) {
+    const { os, browser, deviceType, ua } = detectDevice();
+    const geo = await fetchGeoInfo();
+
+    const lines = [
+      `🎉 Yangi foydalanuvchi ro'yxatdan o'tdi!`,
+      ``,
+      `📧 Email: ${email}`,
+      `🕐 Vaqt: ${new Date().toLocaleString('uz-UZ')}`,
+      `🌐 Til: ${navigator.language || 'Noma\'lum'}`,
+      `🕑 Soat mintaqasi: ${Intl.DateTimeFormat().resolvedOptions().timeZone || 'Noma\'lum'}`,
+      `💻 Qurilma: ${deviceType} (${os})`,
+      `🧭 Brauzer: ${browser}`,
+      `📐 Ekran: ${screen.width}x${screen.height}`,
+      `🔗 Manba: ${document.referrer ? document.referrer : 'To\'g\'ridan-to\'g\'ri'}`,
+    ];
+
+    if (geo && !geo.error) {
+      lines.push(
+        `📍 Joylashuv: ${[geo.city, geo.region, geo.country_name].filter(Boolean).join(', ') || 'Noma\'lum'}`,
+        `🌍 IP: ${geo.ip || 'Noma\'lum'}`,
+        `📡 Provayder: ${geo.org || 'Noma\'lum'}`,
+      );
+    }
+
+    lines.push(``, `UA: ${ua}`);
+
+    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TG_CHAT_ID,
+        text:    lines.join('\n'),
+      }),
+    }).catch(() => {}); // Telegram fail bo'lsa ham ro'yxatdan o'tish davom etadi
+  }
+
   // --- ACTIONS ---
 
   async function login() {
@@ -262,6 +338,7 @@ const Auth = (() => {
       if (data.session) {
         // Tizimda "Confirm Email" o'chirilgan bo'lsa, to'g'ridan to'g'ri kiradi
         currentUser = data.session.user;
+        notifyNewUser(email);
         await DB.initCloud();
         showApp();
       } else {
@@ -313,6 +390,7 @@ const Auth = (() => {
         setFlow('new_password');
       } else {
         // Signup tasdiqlangach o'zi kirib ketadi (onAuthStateChange ishladi)
+        notifyNewUser(tempEmail);
       }
     }
   }
