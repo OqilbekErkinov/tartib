@@ -1,4 +1,4 @@
-const CACHE = 'tartibla-v6';
+const CACHE = 'tartibla-v7';
 
 const APP_SHELL = [
   './',
@@ -6,6 +6,7 @@ const APP_SHELL = [
   './style.css',
   './manifest.json',
   './tartibla.png',
+  './ORANGE.png',
   './js/storage.js',
   './js/finance.js',
   './js/books.js',

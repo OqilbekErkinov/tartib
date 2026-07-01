@@ -347,6 +347,16 @@ const App = (() => {
 
   // ── PWA INSTALL BANNER ────────────────────────────────────────
   let _deferredInstall = null;
+
+  // iOS'da (Safari va shu jumladan Chrome, chunki u ham WebKit'dan foydalanadi)
+  // beforeinstallprompt umuman ishlamaydi — o'rnatish faqat qo'lda,
+  // Ulashish tugmasi orqali "Bosh ekranga qo'shish" bilan amalga oshadi.
+  const _isIos = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    // iPadOS 13+ standart holatda "Macintosh" deb ko'rinadi — teginish orqali ajratamiz
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const _isStandalone = window.navigator.standalone === true ||
+    window.matchMedia('(display-mode: standalone)').matches;
+
   window.addEventListener('beforeinstallprompt', e => {
     e.preventDefault();
     _deferredInstall = e;
@@ -362,7 +372,28 @@ const App = (() => {
     localStorage.setItem('tartib_pwa_dismissed', '1');
   });
 
+  if (_isIos && !_isStandalone && !localStorage.getItem('tartib_pwa_dismissed')) {
+    document.addEventListener('DOMContentLoaded', () => {
+      const banner = document.getElementById('installBanner');
+      if (banner) banner.style.display = 'flex';
+    });
+  }
+
   function installPwa() {
+    if (_isIos) {
+      openModal("Ilovani o'rnatish", `
+        <div style="text-align:center">
+          <p style="font-size:15px;margin-bottom:16px">iPhone/iPad'da Tartiblani bosh ekranga qo'shish uchun:</p>
+          <div style="text-align:left;font-size:14px;line-height:2">
+            1) Brauzerdagi <b>📤 Ulashish (Share)</b> tugmasini bosing<br>
+            &nbsp;&nbsp;&nbsp;(Safari'da — pastki panelda, Chrome'da — manzil qatorida)<br>
+            2) Ro'yxatdan <b>"Bosh ekranga qo'shish"</b> ("Add to Home Screen") ni tanlang<br>
+            3) Yuqori o'ng burchakdagi <b>"Qo'shish"</b> tugmasini bosing
+          </div>
+        </div>
+      `);
+      return;
+    }
     if (!_deferredInstall) {
       Toast("Ilova allaqachon o'rnatilgan yoki brauzer qo'llab-quvvatlamaydi", 'success');
       return;
