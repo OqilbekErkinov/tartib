@@ -1,4 +1,4 @@
-const CACHE = 'tartibla-v5';
+const CACHE = 'tartibla-v6';
 
 const APP_SHELL = [
   './',
