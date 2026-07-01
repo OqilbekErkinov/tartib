@@ -234,9 +234,7 @@ const Finance = (() => {
       </div>
       <div class="form-group">
         <label class="form-label">Kategoriya</label>
-        <select class="form-select" id="fi_cat">
-          ${cats.map(k => `<option value="${k}" ${data.cat===k?'selected':''}>${CATS[k].icon} ${CATS[k].label}</option>`).join('')}
-        </select>
+        ${CSelect.html('fi_cat', cats.map(k => ({ value: k, label: CATS[k].icon + ' ' + CATS[k].label })), data.cat || cats[0])}
       </div>
       <div class="form-group">
         <label class="form-label">Izoh (ixtiyoriy)</label>
@@ -271,7 +269,7 @@ const Finance = (() => {
     if (!amount || amount <= 0) { App.Toast('Miqdorni kiriting'); return; }
     const txs = DB.getTransactions();
     txs.push({ id: uid(), type, amount,
-      cat:  document.getElementById('fi_cat').value,
+      cat:  CSelect.getValue('fi_cat'),
       note: document.getElementById('fi_note').value.trim(),
       date: document.getElementById('fi_date').value || todayStr(),
     });
@@ -287,7 +285,7 @@ const Finance = (() => {
     const t   = txs.find(x => x.id === id);
     if (t) {
       t.amount = amount;
-      t.cat    = document.getElementById('fi_cat').value;
+      t.cat    = CSelect.getValue('fi_cat');
       t.note   = document.getElementById('fi_note').value.trim();
       t.date   = document.getElementById('fi_date').value || todayStr();
     }
@@ -478,16 +476,16 @@ const Finance = (() => {
     openModal('🔁 Takroriy to\'lov qo\'shish', `
       <div class="form-group">
         <label class="form-label">Turi</label>
-        <select class="form-select" id="rc_type" onchange="Finance._rcToggleCats(this.value)">
-          <option value="expense">− Xarajat</option>
-          <option value="income">+ Daromad</option>
-        </select>
+        ${CSelect.html('rc_type', [
+          { value: 'expense', label: '− Xarajat' },
+          { value: 'income',  label: '+ Daromad'  },
+        ], 'expense', 'Finance._rcToggleCats')}
       </div>
       <div class="form-group">
         <label class="form-label">Kategoriya</label>
-        <select class="form-select" id="rc_cat">
-          ${expCats.map(k => `<option value="${k}">${CATS[k].icon} ${CATS[k].label}</option>`).join('')}
-        </select>
+        <div id="rc_cat_wrap">
+          ${CSelect.html('rc_cat', expCats.map(k => ({ value: k, label: CATS[k].icon + ' ' + CATS[k].label })), 'food')}
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Miqdor (so'm)</label>
@@ -513,8 +511,8 @@ const Finance = (() => {
     const expCats    = ['food','cafe','trans','cloth','health','edu','entmt','house','other'];
     const incomeCats = ['salary','gift','other'];
     const cats = type === 'income' ? incomeCats : expCats;
-    const sel = document.getElementById('rc_cat');
-    if (sel) sel.innerHTML = cats.map(k => `<option value="${k}">${CATS[k].icon} ${CATS[k].label}</option>`).join('');
+    const wrap = document.getElementById('rc_cat_wrap');
+    if (wrap) wrap.innerHTML = CSelect.html('rc_cat', cats.map(k => ({ value: k, label: CATS[k].icon + ' ' + CATS[k].label })), cats[0]);
   }
 
   function saveRecurring() {
@@ -523,8 +521,8 @@ const Finance = (() => {
     const recs = DB.getRecurring();
     recs.push({
       id:     uid(),
-      type:   document.getElementById('rc_type').value,
-      cat:    document.getElementById('rc_cat').value,
+      type:   CSelect.getValue('rc_type'),
+      cat:    CSelect.getValue('rc_cat'),
       amount,
       day:    parseInt(document.getElementById('rc_day').value) || 1,
       note:   document.getElementById('rc_note').value.trim(),

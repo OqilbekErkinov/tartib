@@ -140,3 +140,73 @@ function numInput(el) {
 function parseAmount(str) {
   return parseFloat(String(str).replace(/\s/g, '')) || 0;
 }
+
+// ===== CUSTOM SELECT =====
+const CSelect = (() => {
+  const CHECK = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><polyline points="20 6 9 17 4 12"/></svg>`;
+  const ARROW = `<svg class="csel-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.csel')) _closeAll();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') _closeAll();
+  });
+
+  function _closeAll() {
+    document.querySelectorAll('.csel.open').forEach(el => el.classList.remove('open'));
+  }
+
+  function toggle(id) {
+    const el = document.getElementById('csel_' + id);
+    if (!el) return;
+    const wasOpen = el.classList.contains('open');
+    _closeAll();
+    if (!wasOpen) el.classList.add('open');
+  }
+
+  function pick(id, value) {
+    const el = document.getElementById('csel_' + id);
+    if (!el) return;
+    el.dataset.value = value;
+    const opt = el.querySelector(`.csel-option[data-value="${value}"]`);
+    const labelEl = el.querySelector('.csel-label');
+    if (opt && labelEl) {
+      const txt = opt.querySelector('.csel-otext');
+      labelEl.innerHTML = txt ? txt.innerHTML : opt.textContent.trim();
+    }
+    el.querySelectorAll('.csel-option').forEach(o => o.classList.toggle('sel', o.dataset.value === value));
+    _closeAll();
+    const cb = el.dataset.onChange;
+    if (cb) {
+      const parts = cb.split('.');
+      let fn = window;
+      for (const p of parts) fn = fn?.[p];
+      if (typeof fn === 'function') fn(value);
+    }
+  }
+
+  function getValue(id) {
+    const el = document.getElementById('csel_' + id);
+    return el ? el.dataset.value : '';
+  }
+
+  function html(id, options, selected, onChange) {
+    const sel = selected || options[0]?.value;
+    const cur = options.find(o => o.value === sel) || options[0];
+    return `<div class="csel" id="csel_${id}" data-value="${cur?.value ?? ''}"${onChange ? ` data-on-change="${onChange}"` : ''}>
+      <button type="button" class="csel-trigger" onclick="CSelect.toggle('${id}')">
+        <span class="csel-label">${cur?.label ?? ''}</span>
+        ${ARROW}
+      </button>
+      <div class="csel-list">
+        ${options.map(o => `<div class="csel-option${o.value === cur?.value ? ' sel' : ''}" data-value="${o.value}" onclick="CSelect.pick('${id}','${o.value}')">
+          <span class="csel-otext">${o.label}</span>
+          <span class="csel-check">${CHECK}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  return { toggle, pick, getValue, html };
+})();

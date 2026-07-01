@@ -87,11 +87,11 @@ const Subscriptions = (() => {
         </div>
         <div class="form-group">
           <label class="form-label">To'lov davri</label>
-          <select class="form-select" id="sb_period">
-            <option value="monthly" ${(data.period||'monthly')==='monthly'?'selected':''}>Oylik</option>
-            <option value="yearly"  ${data.period==='yearly' ?'selected':''}>Yillik</option>
-            <option value="weekly"  ${data.period==='weekly' ?'selected':''}>Haftalik</option>
-          </select>
+          ${CSelect.html('sb_period', [
+            { value: 'monthly', label: 'Oylik'    },
+            { value: 'yearly',  label: 'Yillik'   },
+            { value: 'weekly',  label: 'Haftalik' },
+          ], data.period || 'monthly')}
         </div>
       </div>
       <div class="form-group">
@@ -100,11 +100,10 @@ const Subscriptions = (() => {
       </div>
       <div class="form-group">
         <label class="form-label">Belgi</label>
-        <select class="form-select" id="sb_icon">
-          ${Object.entries(ICONS).map(([k,v]) =>
-            `<option value="${k}" ${data.icon===k?'selected':''}>${v} ${k.charAt(0).toUpperCase()+k.slice(1)}</option>`
-          ).join('')}
-        </select>
+        ${CSelect.html('sb_icon',
+          Object.entries(ICONS).map(([k,v]) => ({ value: k, label: v + ' ' + k.charAt(0).toUpperCase() + k.slice(1) })),
+          data.icon || 'other'
+        )}
       </div>`;
   }
 
@@ -133,9 +132,9 @@ const Subscriptions = (() => {
     if (!amount || amount <= 0) { App.Toast('Miqdorni kiriting'); return; }
     const fields = {
       name, amount,
-      period:   document.getElementById('sb_period').value,
+      period:   CSelect.getValue('sb_period'),
       nextDate: document.getElementById('sb_next').value,
-      icon:     document.getElementById('sb_icon').value,
+      icon:     CSelect.getValue('sb_icon'),
     };
     const subs = DB.getSubs();
     if (id) {

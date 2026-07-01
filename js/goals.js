@@ -153,10 +153,10 @@ const Goals = (() => {
       </div>
       <div class="form-group">
         <label class="form-label">Turi</label>
-        <select class="form-select" id="gl_type" onchange="Goals.toggleNumeric(this.value)">
-          <option value="simple"  ${(data.type||'simple')==='simple' ?'selected':''}>Oddiy (bajarildi/yo'q)</option>
-          <option value="numeric" ${data.type==='numeric'?'selected':''}>Miqdoriy (progress bilan)</option>
-        </select>
+        ${CSelect.html('gl_type', [
+          { value: 'simple',  label: "Oddiy (bajarildi/yo'q)"   },
+          { value: 'numeric', label: 'Miqdoriy (progress bilan)' },
+        ], data.type || 'simple', 'Goals.toggleNumeric')}
       </div>
       <div id="gl_numericFields" style="display:${data.type==='numeric'?'block':'none'}">
         <div class="form-row">
@@ -204,7 +204,7 @@ const Goals = (() => {
   function save(id) {
     const title = document.getElementById('gl_title').value.trim();
     if (!title) { App.Toast('Maqsadni kiriting'); return; }
-    const type   = document.getElementById('gl_type').value;
+    const type   = CSelect.getValue('gl_type');
     const fields = {
       title,
       desc:     document.getElementById('gl_desc').value.trim(),
