@@ -8,7 +8,7 @@
   "theme_color": "#F58F20",
   "icons": [
     {
-      "src": "favicon.svg",
+      "src": "tartibla.png",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

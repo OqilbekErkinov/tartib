@@ -5,7 +5,7 @@ const APP_SHELL = [
   './index.html',
   './style.css',
   './manifest.json',
-  './favicon.svg',
+  './tartibla.png',
   './js/storage.js',
   './js/finance.js',
   './js/books.js',

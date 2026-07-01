@@ -163,9 +163,17 @@ body {
   flex-shrink: 0;
   border-radius: 7px;
   overflow: hidden;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
   box-shadow: 0 2px 6px rgba(245,143,32,.35);
 }
 .header-logo-mark svg { display: block; }
+.header-logo-mark img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  padding: 3px;
+  box-sizing: border-box;
+}
 .header-brand {
   font-size: 10px;
   font-weight: 800;
@@ -1288,11 +1296,18 @@ body {
 }
 .lp-logo-mark {
   width: 34px; height: 34px;
-  background: #F58F20;
+  background: #fff;
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 4px 18px rgba(245,143,32,.45);
   flex-shrink: 0;
+  overflow: hidden;
+}
+.lp-logo-mark img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  padding: 4px;
+  box-sizing: border-box;
 }
 .lp-brand-name {
   font-size: 11px;
